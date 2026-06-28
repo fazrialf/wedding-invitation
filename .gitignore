@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Next.js
+.next/
+out/
+build/
+
+# Env files
+.env
+.env.local
+.env.production
+# Keep .env.example (safe to commit)
+
+# Build cache
+*.tsbuildinfo
+
+# Backup files
+*.bak
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploads
+uploads/
+
+# Docker volumes
+postgres_data/
