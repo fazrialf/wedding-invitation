@@ -231,6 +231,12 @@ export default function DashboardPage() {
       .finally(() => setFetching(false))
   }, [user])
 
+  // Hooks must be called before any early return (React rules of hooks)
+  const countInv     = useCountUp(!fetching && user ? invitations.length : 0)
+  const countPub     = useCountUp(!fetching && user ? invitations.filter(i => i.is_published).length : 0)
+  const countRsvp    = useCountUp(!fetching && user ? totalRsvp : 0)
+  const countWishes  = useCountUp(!fetching && user ? totalWishes : 0)
+
   if (loading || !user) return null
 
   const t = tk[theme]
@@ -243,12 +249,6 @@ export default function DashboardPage() {
     .slice(0, 3)
   const tipsChecked = TIPS.filter(tip => tip.checkFn(invitations)).length
   const chartData = buildChartData(activity)
-
-  // count-up values (hooks at top level via array — use individual hooks)
-  const countInv     = useCountUp(fetching ? 0 : invitations.length)
-  const countPub     = useCountUp(fetching ? 0 : published.length)
-  const countRsvp    = useCountUp(fetching ? 0 : totalRsvp)
-  const countWishes  = useCountUp(fetching ? 0 : totalWishes)
 
   const stats = [
     { label: 'Total Undangan', value: countInv,    color: '#6B3F2A', icon: <IconMail size={16} /> },

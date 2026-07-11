@@ -70,10 +70,10 @@ const cardVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
 }
 
+// Safe top-level hook — used 4 times at component root, never inside map()
 function useCountUp(target: number, duration = 600) {
   const [count, setCount] = useState(0)
   const raf = useRef<number | null>(null)
-
   useEffect(() => {
     if (target === 0) { setCount(0); return }
     const start = performance.now()
@@ -87,7 +87,6 @@ function useCountUp(target: number, duration = 600) {
     raf.current = requestAnimationFrame(animate)
     return () => { if (raf.current) cancelAnimationFrame(raf.current) }
   }, [target, duration])
-
   return count
 }
 
@@ -108,25 +107,6 @@ function downloadCSV(data: RsvpEntry[], filename: string) {
   a.download = filename
   a.click()
   URL.revokeObjectURL(url)
-}
-
-function StatCard({ label, value, color, icon, fetching }: {
-  label: string; value: number; color: string
-  icon: React.ReactNode; fetching: boolean
-}) {
-  const displayed = useCountUp(fetching ? 0 : value)
-  const t_stat = themeTokens.light // placeholder, actual token passed via className
-  return (
-    <div className="contents">
-      <p className="font-playfair text-2xl font-semibold" style={{ color }}>
-        {fetching ? '—' : displayed}
-      </p>
-      <p className="font-lato text-xs mt-1 flex items-center gap-1.5">
-        {icon}
-        {label}
-      </p>
-    </div>
-  )
 }
 
 export default function RsvpPage() {
@@ -174,11 +154,17 @@ export default function RsvpPage() {
   const tidak = rsvps.filter(r => r.attendance === 'tidak')
   const totalGuests = hadir.reduce((s, r) => s + r.guest_count, 0)
 
+  // All 4 hooks called at top level — no loops, no conditions
+  const countTotal  = useCountUp(fetching ? 0 : rsvps.length)
+  const countHadir  = useCountUp(fetching ? 0 : hadir.length)
+  const countTidak  = useCountUp(fetching ? 0 : tidak.length)
+  const countGuests = useCountUp(fetching ? 0 : totalGuests)
+
   const stats = [
-    { label: 'Total Respons', value: rsvps.length,   color: '#6B3F2A', icon: <IconUsers size={12} /> },
-    { label: 'Hadir',         value: hadir.length,   color: '#15803d', icon: <IconUserCheck size={12} /> },
-    { label: 'Tidak Hadir',   value: tidak.length,   color: '#b91c1c', icon: <IconUserX size={12} /> },
-    { label: 'Total Tamu',    value: totalGuests,    color: '#C8A96E', icon: <IconUsersGroup size={12} /> },
+    { label: 'Total Respons', value: countTotal,  color: '#6B3F2A', icon: <IconUsers size={12} /> },
+    { label: 'Hadir',         value: countHadir,  color: '#15803d', icon: <IconUserCheck size={12} /> },
+    { label: 'Tidak Hadir',   value: countTidak,  color: '#b91c1c', icon: <IconUserX size={12} /> },
+    { label: 'Total Tamu',    value: countGuests, color: '#C8A96E', icon: <IconUsersGroup size={12} /> },
   ]
 
   return (
@@ -219,27 +205,23 @@ export default function RsvpPage() {
           </button>
         </div>
 
-        {/* Stats */}
+        {/* Stats — values are plain numbers from top-level hooks, NOT hooks in map() */}
         <motion.div
           className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
-          {stats.map((s, i) => {
-            // eslint-disable-next-line react-hooks/rules-of-hooks
-            const displayed = useCountUp(fetching ? 0 : s.value)
-            return (
-              <motion.div key={i} variants={cardVariants} className={`rounded-xl p-5 ${t.statCard}`}>
-                <p className="font-playfair text-2xl font-semibold" style={{ color: s.color }}>
-                  {fetching ? '—' : displayed}
-                </p>
-                <p className={`font-lato text-xs mt-1 flex items-center gap-1.5 ${t.muted}`}>
-                  {s.icon}{s.label}
-                </p>
-              </motion.div>
-            )
-          })}
+          {stats.map((s, i) => (
+            <motion.div key={i} variants={cardVariants} className={`rounded-xl p-5 ${t.statCard}`}>
+              <p className="font-playfair text-2xl font-semibold" style={{ color: s.color }}>
+                {fetching ? '—' : s.value}
+              </p>
+              <p className={`font-lato text-xs mt-1 flex items-center gap-1.5 ${t.muted}`}>
+                {s.icon}{s.label}
+              </p>
+            </motion.div>
+          ))}
         </motion.div>
 
         {/* Table */}

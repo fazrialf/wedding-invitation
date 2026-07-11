@@ -151,15 +151,16 @@ export default function WishesPage() {
     }
   }
 
+  // Hooks must be called before any early return (React rules of hooks)
+  const totalCount    = useCountUp(!fetching && user ? wishes.length : 0)
+  const approvedCount = useCountUp(!fetching && user ? wishes.filter(w => w.is_approved).length : 0)
+  const pendingCount  = useCountUp(!fetching && user ? wishes.filter(w => !w.is_approved).length : 0)
+
   if (loading || !user) return null
 
   const t = themeTokens[theme]
   const approved = wishes.filter(w => w.is_approved)
   const pending  = wishes.filter(w => !w.is_approved)
-
-  const totalCount    = useCountUp(fetching ? 0 : wishes.length)
-  const approvedCount = useCountUp(fetching ? 0 : approved.length)
-  const pendingCount  = useCountUp(fetching ? 0 : pending.length)
 
   const stats = [
     { label: 'Total Ucapan', value: totalCount,    color: '#6B3F2A', icon: <IconMessage size={12} /> },
