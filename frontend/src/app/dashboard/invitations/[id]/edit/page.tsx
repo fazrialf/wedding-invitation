@@ -6,6 +6,17 @@ import { useRouter, useParams } from 'next/navigation'
 import DashboardSidebar from '@/components/studio/DashboardSidebar'
 import axios from 'axios'
 import toast, { Toaster } from 'react-hot-toast'
+import { themes, getTemplatesByCategory } from '@/themes/config'
+import { templatePalettes, getTemplatePalettes } from '@/themes/palettes'
+
+const CATEGORIES = [
+  { key: 'classic',     label: 'Classic' },
+  { key: 'minimalist',  label: 'Minimalist' },
+  { key: 'floral',      label: 'Floral' },
+  { key: 'nature',      label: 'Nature' },
+  { key: 'fairytale',   label: 'Fairytale' },
+  { key: 'adat',        label: 'Adat / Traditional' },
+]
 
 export default function EditInvitationPage() {
   const { user, loading } = useAuth()
@@ -17,7 +28,8 @@ export default function EditInvitationPage() {
   const [saving, setSaving] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [uploading, setUploading] = useState<'photo'|'music'|null>(null)
-  const [activeTab, setActiveTab] = useState<'details'|'media'|'share'>('details')
+  const [activeTab, setActiveTab] = useState<'details'|'media'|'share'|'design'>('details')
+  const [activeCat, setActiveCat] = useState('classic')
 
   useEffect(() => {
     if (!loading && !user) router.push('/login')
@@ -123,7 +135,7 @@ export default function EditInvitationPage() {
 
         {/* Tabs */}
         <div className="flex gap-1 mb-8 border-b border-stone-200">
-          {(['details', 'media', 'share'] as const).map(tab => (
+          {(['details', 'design', 'media', 'share'] as const).map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               className={`font-cinzel text-xs tracking-widest px-6 py-3 transition-colors border-b-2 -mb-px ${
                 activeTab === tab ? 'border-stone-900 text-stone-900' : 'border-transparent text-stone-400 hover:text-stone-600'
@@ -178,6 +190,130 @@ export default function EditInvitationPage() {
               className="bg-stone-900 hover:bg-stone-700 disabled:opacity-50 text-white font-cinzel text-xs tracking-widest px-8 py-4 transition-colors">
               {saving ? 'SAVING...' : 'SAVE CHANGES'}
             </button>
+          </div>
+        )}
+
+        {/* Tab: Design — Template & Palette Picker */}
+        {activeTab === 'design' && (
+          <div className="space-y-8 max-w-4xl">
+            {/* Category filter */}
+            <div>
+              <p className="font-cinzel text-xs tracking-widest text-stone-400 mb-3">CATEGORY</p>
+              <div className="flex flex-wrap gap-2">
+                {CATEGORIES.map(cat => (
+                  <button key={cat.key} onClick={() => setActiveCat(cat.key)}
+                    className={`font-cinzel text-xs tracking-widest px-4 py-2 border transition-colors ${
+                      activeCat === cat.key
+                        ? 'bg-stone-900 text-white border-stone-900'
+                        : 'border-stone-300 text-stone-500 hover:border-stone-600 hover:text-stone-700'
+                    }`}>
+                    {cat.label.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Template grid */}
+            <div>
+              <p className="font-cinzel text-xs tracking-widest text-stone-400 mb-3">TEMPLATE</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                {Object.values(themes)
+                  .filter(t => (t as any).category === activeCat || (!((t as any).category) && activeCat === 'classic'))
+                  .map(t => {
+                    const isSelected = inv.theme_slug === t.slug
+                    return (
+                      <button key={t.slug} onClick={() => {
+                        set('theme_slug', t.slug)
+                        const palettes = templatePalettes[t.slug]
+                        if (palettes?.length) set('palette_slug', (t as any).defaultPalette || palettes[0].slug)
+                        else set('palette_slug', null)
+                      }}
+                        className={`relative border-2 p-3 text-left transition-all ${
+                          isSelected ? 'border-stone-900 shadow-md' : 'border-stone-200 hover:border-stone-400'
+                        }`}
+                        style={{ background: t.gradientFrom }}>
+                        {/* Color preview dots */}
+                        <div className="flex gap-1 mb-2">
+                          <span className="w-4 h-4 rounded-full border border-white/50 shadow-sm" style={{ background: t.primaryHex }} />
+                          <span className="w-4 h-4 rounded-full border border-white/50 shadow-sm" style={{ background: t.gradientTo }} />
+                          {(t as any).secondaryHex && (
+                            <span className="w-4 h-4 rounded-full border border-white/50 shadow-sm" style={{ background: (t as any).secondaryHex }} />
+                          )}
+                        </div>
+                        <p className="font-cinzel text-xs tracking-widest truncate" style={{ color: t.primaryHex }}>
+                          {t.name.toUpperCase()}
+                        </p>
+                        {isSelected && (
+                          <span className="absolute top-2 right-2 w-4 h-4 bg-stone-900 rounded-full flex items-center justify-center">
+                            <svg width="8" height="8" viewBox="0 0 8 8"><path d="M1 4l2 2 4-4" stroke="white" strokeWidth="1.5" fill="none"/></svg>
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
+              </div>
+            </div>
+
+            {/* Palette picker — only shown when selected template has palettes */}
+            {inv.theme_slug && templatePalettes[inv.theme_slug] && (
+              <div>
+                <p className="font-cinzel text-xs tracking-widest text-stone-400 mb-3">COLOR PALETTE</p>
+                <div className="flex flex-wrap gap-3">
+                  {getTemplatePalettes(inv.theme_slug).map(palette => {
+                    const isSelected = inv.palette_slug === palette.slug
+                    return (
+                      <button key={palette.slug} onClick={() => set('palette_slug', palette.slug)}
+                        className={`flex items-center gap-3 border-2 px-4 py-3 transition-all ${
+                          isSelected ? 'border-stone-900 shadow-md' : 'border-stone-200 hover:border-stone-400'
+                        }`}>
+                        {/* Palette swatch */}
+                        <div className="flex gap-1">
+                          <span className="w-5 h-5 rounded-full border border-stone-200 shadow-sm" style={{ background: palette.primaryHex }} />
+                          <span className="w-5 h-5 rounded-full border border-stone-200 shadow-sm" style={{ background: palette.gradientFrom }} />
+                          <span className="w-5 h-5 rounded-full border border-stone-200 shadow-sm" style={{ background: palette.bgDark.replace('bg-[','').replace(']','') || '#1c1c1c' }} />
+                        </div>
+                        <div className="text-left">
+                          <p className="font-cinzel text-xs tracking-widest text-stone-700">{palette.name.toUpperCase()}</p>
+                          <p className="font-lato text-xs text-stone-400">{palette.primaryHex}</p>
+                        </div>
+                        {isSelected && (
+                          <span className="ml-auto w-4 h-4 bg-stone-900 rounded-full flex items-center justify-center">
+                            <svg width="8" height="8" viewBox="0 0 8 8"><path d="M1 4l2 2 4-4" stroke="white" strokeWidth="1.5" fill="none"/></svg>
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Preview bar */}
+            {inv.theme_slug && (
+              <div className="border border-stone-200 p-4 flex items-center justify-between bg-white">
+                <div>
+                  <p className="font-cinzel text-xs tracking-widest text-stone-400">SELECTED</p>
+                  <p className="font-playfair text-lg mt-1">
+                    {themes[inv.theme_slug]?.name}
+                    {inv.palette_slug && templatePalettes[inv.theme_slug] && (
+                      <span className="font-lato text-sm text-stone-400 ml-2">
+                        — {getTemplatePalettes(inv.theme_slug).find(p => p.slug === inv.palette_slug)?.name}
+                      </span>
+                    )}
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <a href={`/${inv.slug}`} target="_blank"
+                    className="border border-stone-300 text-stone-600 font-cinzel text-xs tracking-widest px-4 py-2 hover:bg-stone-50 transition-colors">
+                    PREVIEW ↗
+                  </a>
+                  <button onClick={handleSave} disabled={saving}
+                    className="bg-stone-900 hover:bg-stone-700 disabled:opacity-50 text-white font-cinzel text-xs tracking-widest px-6 py-2 transition-colors">
+                    {saving ? 'SAVING...' : 'SAVE'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

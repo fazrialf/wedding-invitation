@@ -2,66 +2,205 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/lib/AuthContext'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import toast, { Toaster } from 'react-hot-toast'
+import PelaminanOrnament from '@/components/studio/PelaminanOrnament'
 
 export default function RegisterPage() {
   const { register } = useAuth()
-  const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '' })
+  const router = useRouter()
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (form.password !== form.confirm) return toast.error('Passwords do not match')
-    if (form.password.length < 8) return toast.error('Password must be at least 8 characters')
+    if (password !== confirm) {
+      toast.error('Password tidak cocok')
+      return
+    }
     setLoading(true)
     try {
-      await register(form.name, form.email, form.password)
-    } catch (err: any) {
-      toast.error(err?.response?.data?.error || 'Registration failed')
+      await register(name, email, password)
+      router.push('/dashboard')
+    } catch {
+      toast.error('Gagal mendaftar, coba lagi')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-stone-50 flex items-center justify-center px-4">
-      <Toaster position="top-center" />
-      <div className="w-full max-w-md bg-white shadow-sm border border-stone-100 p-10">
-        <div className="text-center mb-8">
-          <h1 className="font-greatVibes text-5xl text-stone-800 mb-1">Our Wedding</h1>
-          <p className="font-cinzel text-xs tracking-[0.3em] text-stone-400">STUDIO</p>
+    <div className="min-h-screen flex">
+      <Toaster position="top-right" />
+
+      {/* LEFT — Form Panel */}
+      <div
+        className="w-full lg:w-1/2 flex flex-col items-center justify-center px-8 py-12 order-1"
+        style={{ background: '#FAF7F2' }}
+      >
+        {/* Mobile logo */}
+        <div className="lg:hidden text-center mb-10">
+          <h1 className="font-cormorant text-5xl font-semibold italic" style={{ color: '#6B3F2A' }}>Pelaminan</h1>
+          <p className="font-cinzel text-xs tracking-[0.4em] uppercase mt-1" style={{ color: '#6B3F2A', opacity: 0.5 }}>Digital Wedding Invitation</p>
         </div>
-        <h2 className="font-playfair text-2xl text-center mb-6">Create Account</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {[
-            { key: 'name',     label: 'FULL NAME',       type: 'text',     placeholder: 'Your full name' },
-            { key: 'email',    label: 'EMAIL',            type: 'email',    placeholder: 'your@email.com' },
-            { key: 'password', label: 'PASSWORD',         type: 'password', placeholder: '••••••••' },
-            { key: 'confirm',  label: 'CONFIRM PASSWORD', type: 'password', placeholder: '••••••••' },
-          ].map(({ key, label, type, placeholder }) => (
-            <div key={key}>
-              <label className="font-cinzel text-xs tracking-widest text-stone-500 block mb-1">{label}</label>
+
+        <div className="w-full max-w-md">
+          {/* Heading */}
+          <div className="mb-8">
+            <h2 className="font-playfair text-3xl font-semibold" style={{ color: '#2C1A0E' }}>
+              Buat Akun Baru
+            </h2>
+            <p className="font-lato text-sm mt-2" style={{ color: '#6B3F2A', opacity: 0.7 }}>
+              Mulai perjalanan undangan digital Anda
+            </p>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="block font-cinzel text-xs tracking-[0.2em] uppercase mb-2" style={{ color: '#6B3F2A' }}>
+                Nama Lengkap
+              </label>
               <input
-                type={type} required
-                value={(form as any)[key]}
-                onChange={e => setForm({ ...form, [key]: e.target.value })}
-                className="w-full border border-stone-200 px-4 py-3 font-lato text-sm focus:outline-none focus:border-gold-400 transition-colors"
-                placeholder={placeholder}
+                type="text"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder="Nama Anda"
+                required
+                className="w-full px-4 py-3 rounded-lg font-lato text-sm outline-none transition-all"
+                style={{ background: '#fff', border: '1.5px solid #E8DCC8', color: '#2C1A0E' }}
+                onFocus={e => e.target.style.borderColor = '#C8A96E'}
+                onBlur={e => e.target.style.borderColor = '#E8DCC8'}
               />
             </div>
-          ))}
-          <button
-            type="submit" disabled={loading}
-            className="w-full bg-stone-900 hover:bg-stone-700 disabled:opacity-60 text-white font-cinzel text-xs tracking-widest py-4 transition-colors duration-300 mt-2"
-          >
-            {loading ? 'CREATING...' : 'CREATE ACCOUNT'}
-          </button>
-        </form>
-        <p className="text-center font-lato text-sm text-stone-500 mt-6">
-          Already have an account?{' '}
-          <Link href="/login" className="text-gold-600 hover:underline">Sign in</Link>
-        </p>
+
+            <div>
+              <label className="block font-cinzel text-xs tracking-[0.2em] uppercase mb-2" style={{ color: '#6B3F2A' }}>
+                Email
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="your@email.com"
+                required
+                className="w-full px-4 py-3 rounded-lg font-lato text-sm outline-none transition-all"
+                style={{ background: '#fff', border: '1.5px solid #E8DCC8', color: '#2C1A0E' }}
+                onFocus={e => e.target.style.borderColor = '#C8A96E'}
+                onBlur={e => e.target.style.borderColor = '#E8DCC8'}
+              />
+            </div>
+
+            <div>
+              <label className="block font-cinzel text-xs tracking-[0.2em] uppercase mb-2" style={{ color: '#6B3F2A' }}>
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="Minimal 8 karakter"
+                required
+                className="w-full px-4 py-3 rounded-lg font-lato text-sm outline-none transition-all"
+                style={{ background: '#fff', border: '1.5px solid #E8DCC8', color: '#2C1A0E' }}
+                onFocus={e => e.target.style.borderColor = '#C8A96E'}
+                onBlur={e => e.target.style.borderColor = '#E8DCC8'}
+              />
+            </div>
+
+            <div>
+              <label className="block font-cinzel text-xs tracking-[0.2em] uppercase mb-2" style={{ color: '#6B3F2A' }}>
+                Konfirmasi Password
+              </label>
+              <input
+                type="password"
+                value={confirm}
+                onChange={e => setConfirm(e.target.value)}
+                placeholder="Ulangi password"
+                required
+                className="w-full px-4 py-3 rounded-lg font-lato text-sm outline-none transition-all"
+                style={{ background: '#fff', border: '1.5px solid #E8DCC8', color: '#2C1A0E' }}
+                onFocus={e => e.target.style.borderColor = '#C8A96E'}
+                onBlur={e => e.target.style.borderColor = '#E8DCC8'}
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3.5 font-cinzel text-sm tracking-[0.25em] uppercase rounded-lg transition-all duration-200 disabled:opacity-60"
+              style={{ background: loading ? '#9B7A6A' : '#6B3F2A', color: '#FAF7F2' }}
+              onMouseEnter={e => { if (!loading) (e.target as HTMLElement).style.background = '#2C1A0E' }}
+              onMouseLeave={e => { if (!loading) (e.target as HTMLElement).style.background = '#6B3F2A' }}
+            >
+              {loading ? 'Mendaftarkan...' : 'Daftar Sekarang'}
+            </button>
+          </form>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 my-6">
+            <div className="flex-1 h-px bg-[#E8DCC8]" />
+            <div className="w-1 h-1 rounded-full bg-[#C8A96E]" />
+            <div className="flex-1 h-px bg-[#E8DCC8]" />
+          </div>
+
+          <p className="font-lato text-sm text-center" style={{ color: '#6B3F2A', opacity: 0.7 }}>
+            Sudah punya akun?{' '}
+            <Link
+              href="/login"
+              className="font-semibold underline underline-offset-2 hover:opacity-100 transition-opacity"
+              style={{ color: '#6B3F2A' }}
+            >
+              Masuk di sini
+            </Link>
+          </p>
+        </div>
+      </div>
+
+      {/* RIGHT — Brand Panel */}
+      <div
+        className="hidden lg:flex lg:w-1/2 flex-col items-center justify-center relative overflow-hidden order-2"
+        style={{ background: 'linear-gradient(160deg, #2C1A0E 0%, #3D2410 60%, #4A2E18 100%)' }}
+      >
+        {/* Batik texture overlay */}
+        <div className="absolute inset-0 opacity-5"
+          style={{
+            backgroundImage: `repeating-linear-gradient(45deg, #C8A96E 0, #C8A96E 1px, transparent 0, transparent 50%)`,
+            backgroundSize: '20px 20px'
+          }}
+        />
+
+        {/* Corner accents */}
+        <div className="absolute top-6 left-6 w-16 h-16 border-t-2 border-l-2 border-[#C8A96E] opacity-40" />
+        <div className="absolute top-6 right-6 w-16 h-16 border-t-2 border-r-2 border-[#C8A96E] opacity-40" />
+        <div className="absolute bottom-6 left-6 w-16 h-16 border-b-2 border-l-2 border-[#C8A96E] opacity-40" />
+        <div className="absolute bottom-6 right-6 w-16 h-16 border-b-2 border-r-2 border-[#C8A96E] opacity-40" />
+
+        <div className="relative z-10 flex flex-col items-center text-center px-12">
+          <h1 className="font-cormorant text-6xl font-semibold italic mb-2" style={{ color: '#C8A96E' }}>Pelaminan</h1>
+          <p className="font-cinzel text-xs tracking-[0.4em] uppercase mb-10" style={{ color: '#E8DCC8', opacity: 0.6 }}>Digital Wedding Invitation</p>
+
+          <div className="flex items-center gap-3 mb-8 w-48">
+            <div className="flex-1 h-px" style={{ background: 'linear-gradient(to right, transparent, #C8A96E)' }} />
+            <div className="w-1.5 h-1.5 rounded-full bg-[#C8A96E]" />
+            <div className="flex-1 h-px" style={{ background: 'linear-gradient(to left, transparent, #C8A96E)' }} />
+          </div>
+
+          <PelaminanOrnament width={260} height={260} className="opacity-35" />
+
+          <div className="mt-8 flex items-center gap-3 w-64">
+            <div className="flex-1 h-px" style={{ background: 'linear-gradient(to right, transparent, #C8A96E)' }} />
+            <div className="w-1.5 h-1.5 rounded-full bg-[#C8A96E]" />
+            <div className="flex-1 h-px" style={{ background: 'linear-gradient(to left, transparent, #C8A96E)' }} />
+          </div>
+          <p className="font-cinzel text-sm tracking-widest mt-4" style={{ color: '#E8DCC8', opacity: 0.7 }}>
+            Dari Hati, Untuk Selamanya
+          </p>
+        </div>
       </div>
     </div>
   )

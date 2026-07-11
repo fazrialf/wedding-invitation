@@ -62,7 +62,7 @@ router.post('/', auth, [
     slug, bride_name, groom_name, wedding_date,
     akad_date, akad_time, akad_venue,
     reception_date, reception_time, reception_venue,
-    venue_lat, venue_lng, theme_slug,
+    venue_lat, venue_lng, theme_slug, palette_slug,
   } = req.body
 
   try {
@@ -75,13 +75,13 @@ router.post('/', auth, [
         (id, user_id, slug, bride_name, groom_name, wedding_date,
          akad_date, akad_time, akad_venue,
          reception_date, reception_time, reception_venue,
-         venue_lat, venue_lng, theme_slug)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+         venue_lat, venue_lng, theme_slug, palette_slug)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
        RETURNING *`,
       [id, req.user.userId, slug, bride_name, groom_name, wedding_date,
        akad_date || null, akad_time || null, akad_venue || null,
        reception_date || null, reception_time || null, reception_venue || null,
-       venue_lat || null, venue_lng || null, theme_slug || 'gold']
+       venue_lat || null, venue_lng || null, theme_slug || 'gold', palette_slug || null]
     )
     res.status(201).json(result.rows[0])
   } catch (err) {
@@ -97,7 +97,10 @@ router.put('/:id', auth, async (req, res) => {
     'akad_date','akad_time','akad_venue',
     'reception_date','reception_time','reception_venue',
     'venue_lat','venue_lng','cover_photo_url','music_url',
-    'theme_slug','is_published'
+    'theme_slug','palette_slug','is_published',
+    'gallery_photos','love_story','gift_accounts',
+    'bride_full_name','groom_full_name','bride_bio','groom_bio',
+    'bride_father','bride_mother','groom_father','groom_mother',
   ]
   const updates = []
   const values  = []

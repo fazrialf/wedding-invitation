@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 80" width="600" height="80">
+  <defs>
+    <linearGradient id="mtGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1B4332"/>
+      <stop offset="100%" stop-color="#2D6A4F"/>
+    </linearGradient>
+    <linearGradient id="reflectGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#95D5B2" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#95D5B2" stop-opacity="0.1"/>
+    </linearGradient>
+  </defs>
+  <!-- Mountain range -->
+  <path d="M0 50 L30 38 L60 42 L100 25 L130 35 L170 18 L200 30 L240 22 L270 32 L310 15 L340 28 L370 20 L410 30 L440 18 L470 25 L510 20 L540 30 L570 24 L600 35 L600 50 Z" fill="url(#mtGrad)"/>
+  <!-- Snow caps -->
+  <path d="M170 18 L175 22 L165 22 Z" fill="#95D5B2" opacity="0.6"/>
+  <path d="M310 15 L316 20 L304 20 Z" fill="#95D5B2" opacity="0.6"/>
+  <path d="M440 18 L446 23 L434 23 Z" fill="#95D5B2" opacity="0.5"/>
+  <!-- Pine trees on peaks -->
+  <g fill="#1B4332">
+    <polygon points="95,25 100,12 105,25"/>
+    <polygon points="96,20 100,10 104,20"/>
+    <polygon points="235,22 240,10 245,22"/>
+    <polygon points="237,17 240,8 243,17"/>
+    <polygon points="365,20 370,9 375,20"/>
+    <polygon points="367,16 370,7 373,16"/>
+    <polygon points="505,20 510,8 515,20"/>
+    <polygon points="507,15 510,6 513,15"/>
+    <polygon points="125,35 129,25 133,35"/>
+    <polygon points="465,25 469,15 473,25"/>
+    <polygon points="535,30 539,20 543,30"/>
+    <polygon points="55,42 59,32 63,42"/>
+  </g>
+  <!-- Water reflection (inverted, lighter) -->
+  <path d="M0 50 L30 55 L60 53 L100 62 L130 57 L170 65 L200 58 L240 63 L270 57 L310 68 L340 60 L370 64 L410 58 L440 66 L470 62 L510 64 L540 58 L570 62 L600 55 L600 80 L0 80 Z" fill="url(#reflectGrad)"/>
+  <!-- Reflection ripple lines -->
+  <line x1="50" y1="56" x2="120" y2="56" stroke="#95D5B2" stroke-width="0.5" opacity="0.3"/>
+  <line x1="180" y1="60" x2="280" y2="60" stroke="#95D5B2" stroke-width="0.5" opacity="0.25"/>
+  <line x1="350" y1="58" x2="450" y2="58" stroke="#95D5B2" stroke-width="0.5" opacity="0.3"/>
+  <line x1="480" y1="62" x2="570" y2="62" stroke="#95D5B2" stroke-width="0.5" opacity="0.2"/>
+  <!-- Bird silhouettes -->
+  <path d="M140 8 Q145 3 150 8" fill="none" stroke="#1B4332" stroke-width="1" stroke-linecap="round"/>
+  <path d="M280 5 Q284 1 288 5" fill="none" stroke="#1B4332" stroke-width="0.8" stroke-linecap="round"/>
+  <path d="M420 10 Q424 5 428 10" fill="none" stroke="#1B4332" stroke-width="0.8" stroke-linecap="round"/>
+  <path d="M520 6 Q523 2 526 6" fill="none" stroke="#2D6A4F" stroke-width="0.7" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300">
+  <defs>
+    <linearGradient id="crystalGrad1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#C0C0C0"/>
+      <stop offset="50%" stop-color="#7B2FBE"/>
+      <stop offset="100%" stop-color="#4A1A70"/>
+    </linearGradient>
+    <linearGradient id="crystalGrad2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#E8B4B8"/>
+      <stop offset="50%" stop-color="#C0C0C0"/>
+      <stop offset="100%" stop-color="#8A8A9A"/>
+    </linearGradient>
+    <linearGradient id="crystalGrad3" x1="0" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#FFD700"/>
+      <stop offset="50%" stop-color="#E8B4B8"/>
+      <stop offset="100%" stop-color="#7B2FBE"/>
+    </linearGradient>
+    <radialGradient id="roseGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FF8FAB"/>
+      <stop offset="40%" stop-color="#E8B4B8"/>
+      <stop offset="100%" stop-color="#7B2FBE" stop-opacity="0.3"/>
+    </radialGradient>
+    <linearGradient id="moonGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FFFDE7"/>
+      <stop offset="100%" stop-color="#FFD700"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="softGlow">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <!-- Crescent Moon at top -->
+  <g filter="url(#softGlow)">
+    <path d="M150 20 A30 30 0 1 1 150 80 A20 20 0 1 0 150 20" fill="url(#moonGrad)" opacity="0.9"/>
+  </g>
+  <!-- Five-pointed Stars (6-8) -->
+  <g fill="#FFD700" filter="url(#glow)">
+    <!-- Star 1 - large -->
+    <polygon points="80,60 83,50 90,45 83,40 80,30 77,40 70,45 77,50" opacity="0.9"/>
+    <!-- Star 2 -->
+    <polygon points="220,55 222,48 228,45 222,42 220,35 218,42 212,45 218,48" opacity="0.85"/>
+    <!-- Star 3 - small -->
+    <polygon points="50,120 52,115 56,113 52,111 50,106 48,111 44,113 48,115" opacity="0.7"/>
+    <!-- Star 4 -->
+    <polygon points="260,100 262,94 267,92 262,90 260,84 258,90 253,92 258,94" opacity="0.8"/>
+    <!-- Star 5 - tiny -->
+    <polygon points="130,95 131,91 134,90 131,89 130,85 129,89 126,90 129,91" opacity="0.75"/>
+    <!-- Star 6 -->
+    <polygon points="185,80 187,74 191,72 187,70 185,64 183,70 179,72 183,74" opacity="0.9"/>
+    <!-- Star 7 - small -->
+    <polygon points="100,150 101,146 104,145 101,144 100,140 99,144 96,145 99,146" opacity="0.65"/>
+    <!-- Star 8 -->
+    <polygon points="240,160 241,156 244,155 241,154 240,150 239,154 236,155 239,156" opacity="0.7"/>
+  </g>
+  <!-- Sparkle Crosses (4-pointed stars) -->
+  <g fill="#C0C0C0" opacity="0.8">
+    <path d="M160 110 L162 116 L168 118 L162 120 L160 126 L158 120 L152 118 L158 116 Z" filter="url(#glow)"/>
+    <path d="M70 180 L71.5 185 L76 186.5 L71.5 188 L70 193 L68.5 188 L64 186.5 L68.5 185 Z" filter="url(#glow)"/>
+    <path d="M250 200 L251.5 205 L256 206.5 L251.5 208 L250 213 L248.5 208 L244 206.5 L248.5 205 Z" filter="url(#glow)"/>
+    <path d="M200 140 L201 143 L204 144 L201 145 L200 148 L199 145 L196 144 L199 143 Z" opacity="0.6"/>
+  </g>
+  <!-- Crystal Cluster - 3 faceted gems -->
+  <g filter="url(#glow)">
+    <!-- Crystal 1 - tall -->
+    <polygon points="140,220 148,185 156,220 148,225" fill="url(#crystalGrad1)" opacity="0.85"/>
+    <polygon points="148,185 156,220 148,195" fill="#9B4FD8" opacity="0.5"/>
+    <!-- Crystal 2 - medium -->
+    <polygon points="155,225 162,200 169,225 162,228" fill="url(#crystalGrad2)" opacity="0.8"/>
+    <polygon points="162,200 169,225 162,208" fill="#D4A0A4" opacity="0.4"/>
+    <!-- Crystal 3 - small -->
+    <polygon points="125,228 130,208 135,228 130,230" fill="url(#crystalGrad3)" opacity="0.75"/>
+    <polygon points="130,208 135,228 130,214" fill="#C9A040" opacity="0.4"/>
+  </g>
+  <!-- Enchanted Rose with 5 glowing petals -->
+  <g filter="url(#softGlow)" transform="translate(200,220)">
+    <ellipse cx="0" cy="-18" rx="10" ry="16" fill="url(#roseGrad)" opacity="0.85" transform="rotate(0)"/>
+    <ellipse cx="0" cy="-18" rx="10" ry="16" fill="url(#roseGrad)" opacity="0.8" transform="rotate(72)"/>
+    <ellipse cx="0" cy="-18" rx="10" ry="16" fill="url(#roseGrad)" opacity="0.75" transform="rotate(144)"/>
+    <ellipse cx="0" cy="-18" rx="10" ry="16" fill="url(#roseGrad)" opacity="0.8" transform="rotate(216)"/>
+    <ellipse cx="0" cy="-18" rx="10" ry="16" fill="url(#roseGrad)" opacity="0.85" transform="rotate(288)"/>
+    <circle cx="0" cy="0" r="5" fill="#FFD700" opacity="0.6"/>
+  </g>
+  <!-- Trailing Vine with luminous berries -->
+  <path d="M30 240 C50 230, 70 250, 90 235 S130 245, 150 238 S180 250, 200 240" stroke="#4A7A4A" stroke-width="1.5" fill="none" opacity="0.6"/>
+  <path d="M30 240 C40 255, 55 260, 65 255" stroke="#4A7A4A" stroke-width="1" fill="none" opacity="0.5"/>
+  <path d="M90 235 C95 250, 105 255, 110 248" stroke="#4A7A4A" stroke-width="1" fill="none" opacity="0.5"/>
+  <g filter="url(#glow)">
+    <circle cx="45" cy="250" r="3" fill="#7B2FBE" opacity="0.8"/>
+    <circle cx="65" cy="258" r="2.5" fill="#E8B4B8" opacity="0.75"/>
+    <circle cx="100" cy="248" r="3" fill="#FFD700" opacity="0.7"/>
+    <circle cx="120" cy="242" r="2.5" fill="#7B2FBE" opacity="0.8"/>
+    <circle cx="145" cy="245" r="2" fill="#E8B4B8" opacity="0.7"/>
+    <circle cx="170" cy="250" r="3" fill="#C0C0C0" opacity="0.75"/>
+  </g>
+  <!-- Additional sparkle accents -->
+  <g fill="#FFD700" opacity="0.5" filter="url(#glow)">
+    <circle cx="35" cy="70" r="1.5"/><circle cx="270" cy="140" r="1.5"/>
+    <circle cx="150" cy="270" r="2"/><circle cx="280" cy="250" r="1.5"/>
+  </g>
+</svg>

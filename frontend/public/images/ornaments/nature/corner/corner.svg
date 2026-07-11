@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300">
+  <defs>
+    <linearGradient id="bambooGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#556B2F"/>
+      <stop offset="50%" stop-color="#6B8E23"/>
+      <stop offset="100%" stop-color="#556B2F"/>
+    </linearGradient>
+    <linearGradient id="monsteraGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#008080"/>
+      <stop offset="100%" stop-color="#2E8B57"/>
+    </linearGradient>
+    <linearGradient id="fernGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3A7D44"/>
+      <stop offset="100%" stop-color="#6B8E23"/>
+    </linearGradient>
+  </defs>
+  <!-- Bamboo stalk 1 -->
+  <rect x="20" y="10" width="14" height="280" rx="7" fill="url(#bambooGrad)"/>
+  <ellipse cx="27" cy="60" rx="8" ry="3" fill="none" stroke="#556B2F" stroke-width="1.5"/>
+  <ellipse cx="27" cy="120" rx="8" ry="3" fill="none" stroke="#556B2F" stroke-width="1.5"/>
+  <ellipse cx="27" cy="180" rx="8" ry="3" fill="none" stroke="#556B2F" stroke-width="1.5"/>
+  <ellipse cx="27" cy="240" rx="8" ry="3" fill="none" stroke="#556B2F" stroke-width="1.5"/>
+  <!-- Bamboo leaves from stalk 1 -->
+  <path d="M34 55 Q50 45 55 35" fill="none" stroke="#6B8E23" stroke-width="1.5"/>
+  <path d="M55 35 Q52 30 48 33 Q44 40 34 55" fill="#6B8E23" opacity="0.8"/>
+  <path d="M34 58 Q52 52 58 42" fill="none" stroke="#6B8E23" stroke-width="1.5"/>
+  <path d="M58 42 Q55 38 50 40 Q45 48 34 58" fill="#556B2F" opacity="0.7"/>
+  <path d="M20 115 Q5 105 2 95" fill="none" stroke="#6B8E23" stroke-width="1.5"/>
+  <path d="M2 95 Q5 90 10 93 Q14 100 20 115" fill="#6B8E23" opacity="0.8"/>
+  <!-- Bamboo stalk 2 -->
+  <rect x="50" y="40" width="12" height="250" rx="6" fill="url(#bambooGrad)" opacity="0.9"/>
+  <ellipse cx="56" cy="90" rx="7" ry="2.5" fill="none" stroke="#556B2F" stroke-width="1.5"/>
+  <ellipse cx="56" cy="150" rx="7" ry="2.5" fill="none" stroke="#556B2F" stroke-width="1.5"/>
+  <ellipse cx="56" cy="210" rx="7" ry="2.5" fill="none" stroke="#556B2F" stroke-width="1.5"/>
+  <!-- Bamboo leaves from stalk 2 -->
+  <path d="M62 85 Q78 75 82 65" fill="none" stroke="#6B8E23" stroke-width="1.5"/>
+  <path d="M82 65 Q79 60 74 63 Q70 70 62 85" fill="#6B8E23" opacity="0.8"/>
+  <path d="M50 145 Q35 135 30 125" fill="none" stroke="#6B8E23" stroke-width="1.5"/>
+  <path d="M30 125 Q33 120 38 123 Q42 130 50 145" fill="#556B2F" opacity="0.7"/>
+  <!-- Monstera leaf -->
+  <g transform="translate(100, 60)">
+    <path d="M80 120 Q60 80 70 40 Q75 20 90 10 Q110 0 130 15 Q150 30 160 60 Q170 90 155 120 Q140 150 110 160 Q90 165 80 120Z" fill="url(#monsteraGrad)" opacity="0.85"/>
+    <!-- Monstera holes -->
+    <ellipse cx="105" cy="50" rx="8" ry="12" fill="#FDFAF4" opacity="0.6" transform="rotate(-15, 105, 50)"/>
+    <ellipse cx="130" cy="65" rx="7" ry="10" fill="#FDFAF4" opacity="0.6" transform="rotate(10, 130, 65)"/>
+    <ellipse cx="115" cy="90" rx="9" ry="7" fill="#FDFAF4" opacity="0.5" transform="rotate(-5, 115, 90)"/>
+    <ellipse cx="140" cy="100" rx="6" ry="9" fill="#FDFAF4" opacity="0.5"/>
+    <!-- Monstera center vein -->
+    <path d="M90 15 Q100 60 105 120 Q108 145 110 160" fill="none" stroke="#006666" stroke-width="1.5" opacity="0.6"/>
+    <!-- Side veins -->
+    <path d="M95 40 Q80 35 75 45" fill="none" stroke="#006666" stroke-width="0.8" opacity="0.4"/>
+    <path d="M100 65 Q85 60 80 70" fill="none" stroke="#006666" stroke-width="0.8" opacity="0.4"/>
+    <path d="M110 40 Q130 30 145 40" fill="none" stroke="#006666" stroke-width="0.8" opacity="0.4"/>
+    <path d="M115 80 Q135 75 150 85" fill="none" stroke="#006666" stroke-width="0.8" opacity="0.4"/>
+    <!-- Stem -->
+    <path d="M110 160 Q115 200 100 240" fill="none" stroke="#2E8B57" stroke-width="2.5"/>
+  </g>
+  <!-- Fern frond 1 -->
+  <g transform="translate(60, 180) rotate(-20)">
+    <path d="M0 0 Q5 -40 10 -100" fill="none" stroke="#3A7D44" stroke-width="1.5"/>
+    <!-- Pinnae left -->
+    <path d="M2 -15 Q-10 -20 -15 -15" fill="none" stroke="url(#fernGrad)" stroke-width="1"/>
+    <path d="M3 -30 Q-8 -38 -14 -30" fill="none" stroke="url(#fernGrad)" stroke-width="1"/>
+    <path d="M5 -45 Q-5 -55 -12 -45" fill="none" stroke="url(#fernGrad)" stroke-width="1"/>
+    <path d="M6 -60 Q-2 -70 -8 -62" fill="none" stroke="url(#fernGrad)" stroke-width="0.8"/>
+    <path d="M8 -75 Q2 -82 -3 -76" fill="none" stroke="url(#fernGrad)" stroke-width="0.8"/>
+    <!-- Pinnae right -->
+    <path d="M3 -20 Q15 -25 18 -18" fill="none" stroke="url(#fernGrad)" stroke-width="1"/>
+    <path d="M4 -35 Q16 -42 20 -35" fill="none" stroke="url(#fernGrad)" stroke-width="1"/>
+    <path d="M6 -50 Q16 -58 20 -50" fill="none" stroke="url(#fernGrad)" stroke-width="1"/>
+    <path d="M7 -65 Q14 -72 17 -65" fill="none" stroke="url(#fernGrad)" stroke-width="0.8"/>
+    <path d="M9 -80 Q14 -86 16 -80" fill="none" stroke="url(#fernGrad)" stroke-width="0.8"/>
+  </g>
+  <!-- Fern frond 2 -->
+  <g transform="translate(40, 200) rotate(-35)">
+    <path d="M0 0 Q3 -30 6 -80" fill="none" stroke="#3A7D44" stroke-width="1.2"/>
+    <path d="M1 -12 Q-8 -16 -12 -12" fill="none" stroke="#6B8E23" stroke-width="0.8"/>
+    <path d="M2 -25 Q-6 -32 -10 -25" fill="none" stroke="#6B8E23" stroke-width="0.8"/>
+    <path d="M3 -38 Q-4 -45 -8 -38" fill="none" stroke="#6B8E23" stroke-width="0.8"/>
+    <path d="M4 -50 Q-2 -56 -5 -50" fill="none" stroke="#6B8E23" stroke-width="0.7"/>
+    <path d="M2 -15 Q10 -20 14 -15" fill="none" stroke="#6B8E23" stroke-width="0.8"/>
+    <path d="M3 -28 Q11 -35 15 -28" fill="none" stroke="#6B8E23" stroke-width="0.8"/>
+    <path d="M4 -41 Q10 -48 14 -41" fill="none" stroke="#6B8E23" stroke-width="0.8"/>
+    <path d="M5 -54 Q9 -58 12 -54" fill="none" stroke="#6B8E23" stroke-width="0.7"/>
+  </g>
+  <!-- Hummingbird -->
+  <g transform="translate(230, 50) scale(0.8)">
+    <path d="M0 20 Q5 10 15 8 Q25 6 30 10 Q35 14 32 20 Q30 25 20 28 Q10 30 5 25 Z" fill="#FF6B6B"/>
+    <path d="M30 10 Q50 5 55 8" fill="none" stroke="#FF6B6B" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M15 12 Q8 5 5 0 Q10 2 18 8" fill="#FF6B6B" opacity="0.7"/>
+    <path d="M18 10 Q15 2 18 -5 Q20 0 22 8" fill="#FF6B6B" opacity="0.6"/>
+    <circle cx="28" cy="13" r="1.5" fill="#333"/>
+    <path d="M5 25 Q-5 30 -10 35" fill="none" stroke="#FF6B6B" stroke-width="1" stroke-linecap="round"/>
+  </g>
+  <!-- Coral accent flowers -->
+  <circle cx="260" cy="260" r="5" fill="#FF6B6B" opacity="0.6"/>
+  <circle cx="275" cy="250" r="3" fill="#FF6B6B" opacity="0.4"/>
+  <circle cx="250" cy="275" r="4" fill="#FF6B6B" opacity="0.5"/>
+  <!-- Small teal leaves scattered -->
+  <path d="M270 280 Q280 270 290 275 Q280 280 270 280Z" fill="#008080" opacity="0.5"/>
+  <path d="M285 260 Q292 252 298 258 Q292 262 285 260Z" fill="#008080" opacity="0.4"/>
+</svg>

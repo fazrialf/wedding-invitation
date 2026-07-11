@@ -2,8 +2,14 @@ import type { Metadata } from 'next'
 import '../globals.css'
 import { AuthProvider } from '@/lib/AuthContext'
 
-export const metadata: Metadata = { title: 'Register — Wedding Invitation' }
+export const metadata: Metadata = {
+  title: 'Daftar — Pelaminan',
+}
 
 export default function RegisterLayout({ children }: { children: React.ReactNode }) {
-  return <AuthProvider>{children}</AuthProvider>
+  return (
+    <AuthProvider>
+      {children}
+    </AuthProvider>
+  )
 }

@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 80">
+<defs>
+<radialGradient id="mainRose" cx="50%" cy="45%" r="50%"><stop offset="0%" stop-color="#FFF8E7"/><stop offset="35%" stop-color="#E8B4B8"/><stop offset="70%" stop-color="#C9516E"/><stop offset="100%" stop-color="#8B2D4A"/></radialGradient>
+<radialGradient id="budG" cx="50%" cy="30%" r="60%"><stop offset="0%" stop-color="#E8B4B8"/><stop offset="100%" stop-color="#C9516E"/></radialGradient>
+<radialGradient id="jasmineG" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#FFFFFF"/><stop offset="100%" stop-color="#FFF8E7"/></radialGradient>
+<radialGradient id="leafG" cx="30%" cy="30%" r="70%"><stop offset="0%" stop-color="#7A9A5A"/><stop offset="100%" stop-color="#5B7A3A"/></radialGradient>
+<linearGradient id="vineG" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#5B7A3A"/><stop offset="50%" stop-color="#6B8A4A"/><stop offset="100%" stop-color="#5B7A3A"/></linearGradient>
+<radialGradient id="goldG" cx="50%" cy="30%" r="60%"><stop offset="0%" stop-color="#F0D99C"/><stop offset="100%" stop-color="#C9A96E"/></radialGradient>
+</defs>
+<!-- Main S-curve vine -->
+<path d="M0,40 Q50,10 100,30 Q150,50 200,35 Q250,20 300,40 Q350,60 400,35 Q450,10 500,30 Q550,50 600,40" stroke="url(#vineG)" stroke-width="3" fill="none" stroke-linecap="round"/>
+<!-- Secondary thin vine -->
+<path d="M0,42 Q60,18 110,35 Q160,52 210,38 Q260,22 310,42 Q360,62 410,38 Q460,14 510,32 Q555,48 600,42" stroke="#5B7A3A" stroke-width="1" fill="none" opacity="0.5"/>
+<!-- Leaves with serrated edges along vine -->
+<g fill="url(#leafG)" opacity="0.85">
+<path d="M60,22 Q65,12 70,16 L68,14 L72,12 L69,10 L73,8 Q70,5 65,10 Q60,15 60,22Z" transform="rotate(-20,65,15)"/>
+<path d="M60,50 Q55,60 50,56 L52,58 L48,60 L51,62 L47,64 Q50,67 55,62 Q60,57 60,50Z" transform="rotate(10,55,58)"/>
+<path d="M160,45 Q165,55 170,51 L168,53 L172,55 L169,57 L173,59 Q170,62 165,57 Q160,52 160,45Z"/>
+<path d="M240,25 Q235,15 230,19 L232,17 L228,15 L231,13 L227,11 Q230,8 235,13 Q240,18 240,25Z" transform="rotate(15,235,18)"/>
+<path d="M360,55 Q365,65 370,61 L368,63 L372,65 L369,67 L373,69 Q370,72 365,67 Q360,62 360,55Z"/>
+<path d="M440,18 Q435,8 430,12 L432,10 L428,8 L431,6 L427,4 Q430,1 435,6 Q440,11 440,18Z" transform="rotate(-10,435,11)"/>
+<path d="M520,40 Q525,50 530,46 L528,48 L532,50 L529,52 L533,54 Q530,57 525,52 Q520,47 520,40Z"/>
+<path d="M560,30 Q555,20 550,24 L552,22 L548,20 L551,18 L547,16 Q550,13 555,18 Q560,23 560,30Z"/>
+</g>
+<!-- Central large rose (at x=300) -->
+<g transform="translate(300,40)">
+<ellipse cx="0" cy="0" rx="22" ry="20" fill="url(#mainRose)" opacity="0.5"/>
+<ellipse cx="-9" cy="-6" rx="12" ry="8" fill="url(#mainRose)" transform="rotate(-30,-9,-6)"/>
+<ellipse cx="9" cy="-6" rx="12" ry="8" fill="url(#mainRose)" transform="rotate(30,9,-6)"/>
+<ellipse cx="-7" cy="6" rx="10" ry="7" fill="#C9516E" transform="rotate(20,-7,6)"/>
+<ellipse cx="7" cy="6" rx="10" ry="7" fill="#C9516E" transform="rotate(-20,7,6)"/>
+<ellipse cx="-4" cy="-3" rx="7" ry="5" fill="#E8B4B8" opacity="0.8"/>
+<ellipse cx="4" cy="-3" rx="7" ry="5" fill="#E8B4B8" opacity="0.8"/>
+<ellipse cx="0" cy="0" rx="5" ry="4" fill="#FFF8E7" opacity="0.7"/>
+<circle cx="0" cy="0" r="2.5" fill="url(#goldG)" opacity="0.8"/>
+</g>
+<!-- Bud 1 (x=100) -->
+<g transform="translate(100,30)">
+<ellipse cx="0" cy="0" rx="7" ry="10" fill="url(#budG)"/>
+<ellipse cx="-3" cy="-2" rx="4" ry="7" fill="#E8B4B8" opacity="0.6"/>
+<path d="M0,10 L-2,15 L0,13 L2,15 Z" fill="#5B7A3A"/>
+</g>
+<!-- Bud 2 (x=180) -->
+<g transform="translate(180,42)">
+<ellipse cx="0" cy="0" rx="6" ry="9" fill="url(#budG)"/>
+<ellipse cx="2" cy="-2" rx="3.5" ry="6" fill="#E8B4B8" opacity="0.6"/>
+<path d="M0,9 L-2,13 L0,11 L2,13 Z" fill="#5B7A3A"/>
+</g>
+<!-- Bud 3 (x=420) -->
+<g transform="translate(420,32)">
+<ellipse cx="0" cy="0" rx="6.5" ry="9.5" fill="url(#budG)"/>
+<ellipse cx="-2" cy="-2" rx="4" ry="6.5" fill="#E8B4B8" opacity="0.6"/>
+<path d="M0,9 L-2,14 L0,12 L2,14 Z" fill="#5B7A3A"/>
+</g>
+<!-- Bud 4 (x=520) -->
+<g transform="translate(520,35)">
+<ellipse cx="0" cy="0" rx="7" ry="10" fill="url(#budG)"/>
+<ellipse cx="2" cy="-2" rx="4" ry="7" fill="#E8B4B8" opacity="0.6"/>
+<path d="M0,10 L-2,15 L0,13 L2,15 Z" fill="#5B7A3A"/>
+</g>
+<!-- Jasmine clusters -->
+<g fill="url(#jasmineG)" opacity="0.9">
+<!-- Cluster 1 (x~50) -->
+<circle cx="45" cy="35" r="3.5"/><circle cx="50" cy="32" r="3"/><circle cx="42" cy="30" r="2.5"/><circle cx="48" cy="38" r="2.5"/>
+<circle cx="45" cy="35" r="1.2" fill="url(#goldG)"/><circle cx="50" cy="32" r="1" fill="url(#goldG)"/>
+<!-- Cluster 2 (x~220) -->
+<circle cx="218" cy="30" r="3"/><circle cx="223" cy="27" r="2.5"/><circle cx="215" cy="26" r="2.5"/><circle cx="220" cy="34" r="2.5"/>
+<circle cx="218" cy="30" r="1" fill="url(#goldG)"/><circle cx="223" cy="27" r="1" fill="url(#goldG)"/>
+<!-- Cluster 3 (x~380) -->
+<circle cx="378" cy="48" r="3.5"/><circle cx="383" cy="45" r="3"/><circle cx="375" cy="44" r="2.5"/><circle cx="381" cy="52" r="2.5"/>
+<circle cx="378" cy="48" r="1.2" fill="url(#goldG)"/><circle cx="383" cy="45" r="1" fill="url(#goldG)"/>
+<!-- Cluster 4 (x~480) -->
+<circle cx="478" cy="22" r="3"/><circle cx="483" cy="19" r="2.5"/><circle cx="475" cy="18" r="2.5"/><circle cx="480" cy="26" r="2.5"/>
+<circle cx="478" cy="22" r="1" fill="url(#goldG)"/><circle cx="483" cy="19" r="1" fill="url(#goldG)"/>
+<!-- Cluster 5 (x~560) -->
+<circle cx="558" cy="42" r="3"/><circle cx="563" cy="39" r="2.5"/><circle cx="555" cy="38" r="2.5"/><circle cx="560" cy="46" r="2"/>
+<circle cx="558" cy="42" r="1" fill="url(#goldG)"/>
+</g>
+<!-- Gold dots along vine -->
+<circle cx="140" cy="38" r="1.5" fill="url(#goldG)" opacity="0.6"/>
+<circle cx="260" cy="28" r="1.5" fill="url(#goldG)" opacity="0.6"/>
+<circle cx="340" cy="50" r="1.5" fill="url(#goldG)" opacity="0.6"/>
+<circle cx="460" cy="22" r="1.5" fill="url(#goldG)" opacity="0.6"/>
+</svg>

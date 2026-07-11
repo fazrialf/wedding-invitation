@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300">
+  <defs>
+    <linearGradient id="branchGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#8B9A6B"/>
+      <stop offset="100%" stop-color="#8B7355"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Main eucalyptus branch - sweeping curve from top-left -->
+  <path d="M30,20 Q80,60 120,110 Q150,150 170,200 Q185,240 190,280" stroke="#8B7355" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+
+  <!-- Eucalyptus leaves on main branch - oval shapes -->
+  <ellipse cx="55" cy="40" rx="12" ry="6" transform="rotate(-30,55,40)" fill="none" stroke="#8B9A6B" stroke-width="1"/>
+  <ellipse cx="70" cy="55" rx="12" ry="6" transform="rotate(20,70,55)" fill="none" stroke="#8B9A6B" stroke-width="1"/>
+  <ellipse cx="90" cy="78" rx="11" ry="5.5" transform="rotate(-25,90,78)" fill="none" stroke="#8B9A6B" stroke-width="1"/>
+  <ellipse cx="105" cy="95" rx="11" ry="5.5" transform="rotate(25,105,95)" fill="none" stroke="#8B9A6B" stroke-width="1"/>
+  <ellipse cx="120" cy="115" rx="10" ry="5" transform="rotate(-20,120,115)" fill="none" stroke="#8B9A6B" stroke-width="1"/>
+  <ellipse cx="135" cy="135" rx="10" ry="5" transform="rotate(30,135,135)" fill="none" stroke="#8B9A6B" stroke-width="1"/>
+  <ellipse cx="150" cy="158" rx="9" ry="4.5" transform="rotate(-15,150,158)" fill="none" stroke="#8B9A6B" stroke-width="1"/>
+  <ellipse cx="162" cy="178" rx="9" ry="4.5" transform="rotate(25,162,178)" fill="none" stroke="#8B9A6B" stroke-width="1"/>
+  <ellipse cx="175" cy="210" rx="8" ry="4" transform="rotate(-20,175,210)" fill="none" stroke="#8B9A6B" stroke-width="1"/>
+  <ellipse cx="183" cy="240" rx="8" ry="4" transform="rotate(20,183,240)" fill="none" stroke="#8B9A6B" stroke-width="1"/>
+
+  <!-- Secondary branch - from upper right -->
+  <path d="M260,15 Q230,50 200,90 Q180,120 165,155" stroke="#8B7355" stroke-width="1" fill="none" stroke-linecap="round"/>
+
+  <!-- Olive leaf pairs on secondary branch - elongated ellipses at 45 degrees -->
+  <ellipse cx="245" cy="30" rx="14" ry="4" transform="rotate(-45,245,30)" fill="none" stroke="#8B9A6B" stroke-width="0.8"/>
+  <ellipse cx="238" cy="38" rx="14" ry="4" transform="rotate(45,238,38)" fill="none" stroke="#8B9A6B" stroke-width="0.8"/>
+  <ellipse cx="225" cy="55" rx="13" ry="3.8" transform="rotate(-45,225,55)" fill="none" stroke="#8B9A6B" stroke-width="0.8"/>
+  <ellipse cx="218" cy="63" rx="13" ry="3.8" transform="rotate(45,218,63)" fill="none" stroke="#8B9A6B" stroke-width="0.8"/>
+  <ellipse cx="205" cy="82" rx="12" ry="3.5" transform="rotate(-45,205,82)" fill="none" stroke="#8B9A6B" stroke-width="0.8"/>
+  <ellipse cx="198" cy="90" rx="12" ry="3.5" transform="rotate(45,198,90)" fill="none" stroke="#8B9A6B" stroke-width="0.8"/>
+  <ellipse cx="188" cy="108" rx="11" ry="3.2" transform="rotate(-45,188,108)" fill="none" stroke="#8B9A6B" stroke-width="0.8"/>
+  <ellipse cx="182" cy="116" rx="11" ry="3.2" transform="rotate(45,182,116)" fill="none" stroke="#8B9A6B" stroke-width="0.8"/>
+
+  <!-- Third delicate branch - lower left -->
+  <path d="M15,180 Q40,190 70,195 Q100,198 130,192" stroke="#8B7355" stroke-width="0.8" fill="none" stroke-linecap="round"/>
+
+  <!-- Small leaves on third branch -->
+  <ellipse cx="35" cy="185" rx="8" ry="3.5" transform="rotate(-10,35,185)" fill="none" stroke="#8B9A6B" stroke-width="0.8"/>
+  <ellipse cx="55" cy="190" rx="8" ry="3.5" transform="rotate(15,55,190)" fill="none" stroke="#8B9A6B" stroke-width="0.8"/>
+  <ellipse cx="80" cy="195" rx="7" ry="3" transform="rotate(-8,80,195)" fill="none" stroke="#8B9A6B" stroke-width="0.8"/>
+  <ellipse cx="100" cy="197" rx="7" ry="3" transform="rotate(12,100,197)" fill="none" stroke="#8B9A6B" stroke-width="0.8"/>
+  <ellipse cx="118" cy="195" rx="6" ry="2.8" transform="rotate(-5,118,195)" fill="none" stroke="#8B9A6B" stroke-width="0.8"/>
+
+  <!-- Geometric diamond accents - rotated squares with gold fill -->
+  <rect x="140" y="45" width="8" height="8" transform="rotate(45,144,49)" fill="#C9A96E" opacity="0.8"/>
+  <rect x="60" cy="140" width="7" height="7" transform="rotate(45,63.5,143.5)" fill="#C9A96E" opacity="0.7" y="137"/>
+  <rect x="220" y="165" width="6" height="6" transform="rotate(45,223,168)" fill="#C9A96E" opacity="0.75"/>
+  <rect x="100" y="250" width="7" height="7" transform="rotate(45,103.5,253.5)" fill="#C9A96E" opacity="0.65"/>
+
+  <!-- Tiny dot accents -->
+  <circle cx="45" cy="30" r="1.2" fill="#C9A96E" opacity="0.5"/>
+  <circle cx="270" cy="80" r="1.2" fill="#C9A96E" opacity="0.5"/>
+  <circle cx="150" cy="270" r="1.2" fill="#C9A96E" opacity="0.5"/>
+</svg>

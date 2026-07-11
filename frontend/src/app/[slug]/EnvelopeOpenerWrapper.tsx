@@ -20,8 +20,10 @@ const WishesWall     = dynamic(() => import('@/components/invitation/WishesWall'
 const MusicPlayer    = dynamic(() => import('@/components/invitation/MusicPlayer'))
 const EnvelopeOpener = dynamic(() => import('@/components/invitation/EnvelopeOpener'))
 
+const GiftRegistry   = dynamic(() => import('@/components/invitation/GiftRegistry'))
 const SectionDivider = dynamic(() => import('@/components/invitation/SectionDivider'))
 const AnimateOnScroll = dynamic(() => import('@/components/invitation/AnimateOnScroll'))
+import { ImageCornerOrnament, HeroOrnament } from '@/components/invitation/Ornaments'
 
 interface Props {
   invitation: any
@@ -64,10 +66,19 @@ export default function EnvelopeOpenerWrapper({ invitation, theme, guestName }: 
         : invitation.gift_accounts)
     : undefined
 
+  const isFairytale = theme.slug.startsWith('fai-')
+  const isFloral    = theme.slug.startsWith('flo-')
+  const isNature    = theme.slug.startsWith('nat-')
+  const hasImageCorner = isFairytale || isFloral
+  const hasHeroBg      = isFloral || isNature
+
   return (
-    <main className={`${theme.bgPage} min-h-screen overflow-hidden`}>
+    <main className={`${theme.bgPage} min-h-screen overflow-hidden relative`}>
       <ViewTracker invitationId={invitation.id} guestName={guestName} />
       {invitation.music_url && <MusicPlayer musicUrl={invitation.music_url} theme={theme} />}
+
+      {/* ── Image corners for fairytale / floral themes ─────── */}
+      {/* (viewport corners removed per user request) */}
 
       {/* ── Quranic Verse ───────────────────────────────────── */}
       <AnimateOnScroll animation="fade-up" duration={1200}>
@@ -88,6 +99,14 @@ export default function EnvelopeOpenerWrapper({ invitation, theme, guestName }: 
       </AnimateOnScroll>
 
       <SectionDivider variant="curve" theme={theme} flip />
+
+      {/* ── Art accent between Hero and Couple ─────────────── */}
+      {hasImageCorner && (
+        <div className="flex justify-between items-center pointer-events-none px-0 overflow-hidden" style={{ marginBottom: '-40px', position: 'relative', zIndex: 5 }}>
+          <ImageCornerOrnament theme={theme} position="bottom-left" size={120} variant={1} />
+          <ImageCornerOrnament theme={theme} position="bottom-right" size={120} variant={1} />
+        </div>
+      )}
 
       {/* ── Couple Profile ─────────────────────────────────── */}
       <AnimateOnScroll animation="fade-up" duration={1000}>
@@ -118,6 +137,13 @@ export default function EnvelopeOpenerWrapper({ invitation, theme, guestName }: 
 
       <SectionDivider variant="floral" theme={theme} />
 
+      {/* ── Art accent between Couple and Events ───────────── */}
+      {hasImageCorner && (
+        <div className="flex justify-center pointer-events-none overflow-hidden" style={{ marginBottom: '-40px', position: 'relative', zIndex: 5 }}>
+          <ImageCornerOrnament theme={theme} position="top-left" size={120} variant={2} />
+        </div>
+      )}
+
       {/* ── Event Schedule ─────────────────────────────────── */}
       <AnimateOnScroll animation="fade-up" duration={1000} delay={100}>
         <EventSchedule
@@ -140,8 +166,30 @@ export default function EnvelopeOpenerWrapper({ invitation, theme, guestName }: 
         <CountdownTimer weddingDate={invitation.wedding_date} theme={theme} />
       </AnimateOnScroll>
 
+      {/* ── Art accent before Gift Registry ────────────────── */}
+      {hasImageCorner && (
+        <div className="flex justify-between pointer-events-none overflow-hidden" style={{ marginBottom: '-40px', position: 'relative', zIndex: 5 }}>
+          <ImageCornerOrnament theme={theme} position="top-left" size={120} variant={3} />
+          <ImageCornerOrnament theme={theme} position="top-right" size={120} variant={3} />
+        </div>
+      )}
+
+      {/* ── Gift Registry ──────────────────────────────────── */}
+      <AnimateOnScroll animation="fade-up" duration={1000}>
+        <GiftRegistry
+          theme={theme}
+          gifts={gifts}
+        />
+      </AnimateOnScroll>
+
       <SectionDivider variant="wave" theme={theme} flip />
 
+      {/* ── Art accent before Love Story ────────────────────── */}
+      {hasImageCorner && (
+        <div className="flex justify-center pointer-events-none overflow-hidden" style={{ marginBottom: '-40px', position: 'relative', zIndex: 5 }}>
+          <ImageCornerOrnament theme={theme} position="top-right" size={120} variant={4} />
+        </div>
+      )}
 
       {/* ── Love Story Carousel ────────────────────────────── */}
       <AnimateOnScroll animation="fade-up" duration={1000} delay={100}>
@@ -159,9 +207,17 @@ export default function EnvelopeOpenerWrapper({ invitation, theme, guestName }: 
 
       {/* ── Photo Gallery ──────────────────────────────────── */}
       {gallery.length > 0 && (
-        <AnimateOnScroll animation="fade-up" duration={1000} delay={100}>
-          <PhotoGallery photos={gallery} theme={theme} />
-        </AnimateOnScroll>
+        <>
+          {hasImageCorner && (
+            <div className="flex justify-between pointer-events-none overflow-hidden" style={{ marginBottom: '-40px', position: 'relative', zIndex: 5 }}>
+              <ImageCornerOrnament theme={theme} position="bottom-left" size={120} variant={2} />
+              <ImageCornerOrnament theme={theme} position="bottom-right" size={120} variant={2} />
+            </div>
+          )}
+          <AnimateOnScroll animation="fade-up" duration={1000} delay={100}>
+            <PhotoGallery photos={gallery} theme={theme} />
+          </AnimateOnScroll>
+        </>
       )}
 
       <SectionDivider variant="wave" theme={theme} />

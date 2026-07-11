@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <defs>
+    <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FDFAF4"/>
+      <stop offset="50%" stop-color="#F5EDD0"/>
+      <stop offset="100%" stop-color="#E8D5A3"/>
+    </linearGradient>
+    <linearGradient id="poolGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#D8D8D8"/>
+    </linearGradient>
+    <linearGradient id="poolReflect" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#C9A96E" stop-opacity="0.08"/>
+      <stop offset="50%" stop-color="#C9A96E" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#C9A96E" stop-opacity="0.08"/>
+    </linearGradient>
+    <linearGradient id="pathStone" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#E8E0D0"/>
+      <stop offset="100%" stop-color="#D5CDB8"/>
+    </linearGradient>
+    <linearGradient id="cypressGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4A6B2E"/>
+      <stop offset="100%" stop-color="#5B7A3A"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Sky background -->
+  <rect width="800" height="600" fill="url(#skyGrad)"/>
+
+  <!-- Distant horizon line -->
+  <line x1="0" y1="380" x2="800" y2="380" stroke="#D5CDB8" stroke-width="0.5" opacity="0.4"/>
+
+  <!-- Cypress trees - tall narrow pointed shapes -->
+  <path d="M120,380 Q120,180 125,120 Q130,100 130,120 Q135,180 135,380 Z" fill="url(#cypressGrad)" opacity="0.9"/>
+  <path d="M230,380 Q230,200 235,150 Q238,130 238,150 Q242,200 242,380 Z" fill="#5B7A3A" opacity="0.85"/>
+  <path d="M550,380 Q550,190 555,130 Q558,110 558,130 Q562,190 562,380 Z" fill="url(#cypressGrad)" opacity="0.9"/>
+  <path d="M650,380 Q650,210 654,160 Q657,140 657,160 Q660,210 660,380 Z" fill="#5B7A3A" opacity="0.8"/>
+  <path d="M720,380 Q720,220 724,170 Q726,155 726,170 Q728,220 728,380 Z" fill="url(#cypressGrad)" opacity="0.75"/>
+
+  <!-- Tree trunks -->
+  <rect x="125" y="360" width="5" height="20" fill="#8B7355" rx="1"/>
+  <rect x="234" y="360" width="4" height="20" fill="#8B7355" rx="1"/>
+  <rect x="554" y="360" width="5" height="20" fill="#8B7355" rx="1"/>
+  <rect x="653" y="360" width="4" height="20" fill="#8B7355" rx="1"/>
+  <rect x="723" y="360" width="3" height="20" fill="#8B7355" rx="1"/>
+
+  <!-- Stone path - rounded rectangles leading to pool -->
+  <rect x="370" y="520" width="60" height="18" rx="8" fill="url(#pathStone)" opacity="0.7"/>
+  <rect x="365" y="490" width="70" height="18" rx="8" fill="url(#pathStone)" opacity="0.75"/>
+  <rect x="360" y="460" width="80" height="18" rx="8" fill="url(#pathStone)" opacity="0.8"/>
+  <rect x="355" y="430" width="90" height="18" rx="8" fill="url(#pathStone)" opacity="0.85"/>
+  <rect x="350" y="400" width="100" height="18" rx="8" fill="url(#pathStone)" opacity="0.9"/>
+
+  <!-- Reflective marble pool - centered -->
+  <rect x="280" y="385" width="240" height="10" rx="2" fill="url(#poolGrad)" stroke="#C9A96E" stroke-width="0.5"/>
+  <rect x="280" y="385" width="240" height="10" rx="2" fill="url(#poolReflect)"/>
+
+  <!-- Gold vein patterns in marble pool -->
+  <path d="M290,388 Q320,390 350,387 Q380,392 410,389 Q440,386 470,391 Q500,388 510,390" stroke="#C9A96E" stroke-width="0.4" fill="none" opacity="0.3"/>
+  <path d="M295,392 Q330,394 360,391 Q390,395 420,392 Q450,390 480,393 Q505,391 515,393" stroke="#C9A96E" stroke-width="0.3" fill="none" opacity="0.25"/>
+
+  <!-- Wildflower dots along path - left side -->
+  <circle cx="340" cy="435" r="2.5" fill="#C4A8D4" opacity="0.8"/>
+  <circle cx="335" cy="450" r="2" fill="#E8B4C8" opacity="0.7"/>
+  <circle cx="345" cy="470" r="3" fill="#FFFFFF" opacity="0.6"/>
+  <circle cx="330" cy="490" r="2" fill="#C4A8D4" opacity="0.75"/>
+  <circle cx="340" cy="510" r="2.5" fill="#E8B4C8" opacity="0.7"/>
+  <circle cx="325" cy="525" r="2" fill="#FFFFFF" opacity="0.65"/>
+
+  <!-- Wildflower dots along path - right side -->
+  <circle cx="460" cy="432" r="2.5" fill="#E8B4C8" opacity="0.8"/>
+  <circle cx="465" cy="455" r="2" fill="#FFFFFF" opacity="0.7"/>
+  <circle cx="455" cy="475" r="3" fill="#C4A8D4" opacity="0.6"/>
+  <circle cx="470" cy="495" r="2" fill="#E8B4C8" opacity="0.75"/>
+  <circle cx="460" cy="515" r="2.5" fill="#FFFFFF" opacity="0.7"/>
+  <circle cx="475" cy="530" r="2" fill="#C4A8D4" opacity="0.65"/>
+
+  <!-- Extra scattered wildflowers near trees -->
+  <circle cx="145" cy="375" r="2" fill="#E8B4C8" opacity="0.5"/>
+  <circle cx="155" cy="370" r="1.5" fill="#C4A8D4" opacity="0.5"/>
+  <circle cx="540" cy="372" r="2" fill="#FFFFFF" opacity="0.5"/>
+  <circle cx="570" cy="375" r="1.5" fill="#E8B4C8" opacity="0.4"/>
+  <circle cx="670" cy="374" r="2" fill="#C4A8D4" opacity="0.5"/>
+
+  <!-- Subtle ground plane -->
+  <rect x="0" y="380" width="800" height="220" fill="#F0E8D4" opacity="0.15"/>
+</svg>

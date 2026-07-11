@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+<defs>
+<radialGradient id="roseBlush" cx="50%" cy="40%" r="50%"><stop offset="0%" stop-color="#FFF8E7"/><stop offset="60%" stop-color="#E8B4B8"/><stop offset="100%" stop-color="#C9516E"/></radialGradient>
+<radialGradient id="roseDeep" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#E8B4B8"/><stop offset="70%" stop-color="#C9516E"/><stop offset="100%" stop-color="#8B2D4A"/></radialGradient>
+<radialGradient id="roseCream" cx="40%" cy="40%" r="55%"><stop offset="0%" stop-color="#FFFDF5"/><stop offset="50%" stop-color="#FFF8E7"/><stop offset="100%" stop-color="#E8B4B8"/></radialGradient>
+<radialGradient id="goldG" cx="50%" cy="30%" r="60%"><stop offset="0%" stop-color="#F0D99C"/><stop offset="100%" stop-color="#C9A96E"/></radialGradient>
+<radialGradient id="wisteriaG" cx="50%" cy="0%" r="80%"><stop offset="0%" stop-color="#C8A8D8"/><stop offset="60%" stop-color="#9B7CB8"/><stop offset="100%" stop-color="#7A5A9A"/></radialGradient>
+<radialGradient id="fountainG" cx="50%" cy="20%" r="70%"><stop offset="0%" stop-color="#D4D0C8"/><stop offset="100%" stop-color="#9A9688"/></radialGradient>
+<radialGradient id="waterG" cx="50%" cy="40%" r="50%"><stop offset="0%" stop-color="#B8D4E8" stop-opacity="0.8"/><stop offset="100%" stop-color="#7AAFC8" stop-opacity="0.6"/></radialGradient>
+<filter id="watercolor"><feGaussianBlur in="SourceGraphic" stdDeviation="1.5" result="blur"/><feColorMatrix in="blur" type="saturate" values="0.85" result="soft"/><feComposite in="SourceGraphic" in2="soft" operator="over"/></filter>
+<filter id="softEdge"><feGaussianBlur stdDeviation="2"/></filter>
+</defs>
+<!-- Sky background -->
+<rect width="800" height="600" fill="#FFF8E7" opacity="0.3"/>
+<!-- Wisteria cascading from top -->
+<g filter="url(#watercolor)" opacity="0.7">
+<path d="M50,0 Q60,40 55,80 Q50,120 58,160" stroke="#9B7CB8" stroke-width="2" fill="none"/>
+<ellipse cx="55" cy="50" rx="12" ry="20" fill="url(#wisteriaG)"/><ellipse cx="50" cy="90" rx="10" ry="18" fill="url(#wisteriaG)"/><ellipse cx="58" cy="130" rx="8" ry="15" fill="url(#wisteriaG)"/>
+<path d="M150,0 Q145,50 155,100 Q160,140 150,180" stroke="#9B7CB8" stroke-width="2" fill="none"/>
+<ellipse cx="150" cy="40" rx="14" ry="22" fill="url(#wisteriaG)"/><ellipse cx="155" cy="85" rx="11" ry="20" fill="url(#wisteriaG)"/><ellipse cx="150" cy="130" rx="9" ry="16" fill="url(#wisteriaG)"/><ellipse cx="152" cy="165" rx="7" ry="12" fill="url(#wisteriaG)"/>
+<path d="M650,0 Q640,45 648,90 Q655,130 645,170" stroke="#9B7CB8" stroke-width="2" fill="none"/>
+<ellipse cx="648" cy="45" rx="13" ry="21" fill="url(#wisteriaG)"/><ellipse cx="650" cy="90" rx="10" ry="19" fill="url(#wisteriaG)"/><ellipse cx="645" cy="135" rx="9" ry="15" fill="url(#wisteriaG)"/>
+<path d="M740,0 Q735,40 742,85 Q748,120 738,155" stroke="#9B7CB8" stroke-width="2" fill="none"/>
+<ellipse cx="740" cy="40" rx="12" ry="20" fill="url(#wisteriaG)"/><ellipse cx="742" cy="85" rx="10" ry="17" fill="url(#wisteriaG)"/><ellipse cx="738" cy="125" rx="8" ry="14" fill="url(#wisteriaG)"/>
+</g>
+<!-- Wrought-iron archway -->
+<g stroke="#3A3A3A" stroke-width="3" fill="none">
+<path d="M250,580 L250,200 Q250,100 400,80 Q550,100 550,200 L550,580"/>
+<path d="M260,580 L260,210 Q260,115 400,95 Q540,115 540,210 L540,580" stroke-width="1.5"/>
+<!-- Decorative scrollwork -->
+<path d="M280,300 Q300,280 320,300 Q340,320 360,300" stroke-width="2"/>
+<path d="M440,300 Q460,280 480,300 Q500,320 520,300" stroke-width="2"/>
+<path d="M300,150 Q350,130 400,140 Q450,130 500,150" stroke-width="1.5"/>
+<circle cx="400" cy="85" r="12" stroke-width="2"/>
+</g>
+<!-- Climbing roses on archway -->
+<g filter="url(#watercolor)">
+<!-- Left side roses -->
+<circle cx="260" cy="250" r="18" fill="url(#roseBlush)"/><circle cx="258" cy="248" r="10" fill="url(#roseCream)" opacity="0.7"/>
+<circle cx="255" cy="350" r="15" fill="url(#roseDeep)"/><circle cx="253" cy="348" r="8" fill="#E8B4B8" opacity="0.6"/>
+<circle cx="265" cy="180" r="14" fill="url(#roseBlush)"/><circle cx="263" cy="178" r="7" fill="#FFF8E7" opacity="0.5"/>
+<!-- Top roses -->
+<circle cx="340" cy="110" r="16" fill="url(#roseDeep)"/><circle cx="338" cy="108" r="9" fill="url(#roseCream)" opacity="0.6"/>
+<circle cx="400" cy="85" r="20" fill="url(#roseBlush)"/><circle cx="398" cy="82" r="12" fill="url(#roseCream)" opacity="0.7"/>
+<circle cx="460" cy="110" r="16" fill="url(#roseBlush)"/><circle cx="458" cy="108" r="9" fill="#FFF8E7" opacity="0.6"/>
+<!-- Right side roses -->
+<circle cx="540" cy="250" r="18" fill="url(#roseDeep)"/><circle cx="538" cy="248" r="10" fill="url(#roseCream)" opacity="0.7"/>
+<circle cx="545" cy="350" r="15" fill="url(#roseBlush)"/><circle cx="543" cy="348" r="8" fill="#E8B4B8" opacity="0.6"/>
+<circle cx="535" cy="180" r="14" fill="url(#roseDeep)"/><circle cx="533" cy="178" r="7" fill="url(#roseCream)" opacity="0.5"/>
+<!-- Buds -->
+<ellipse cx="270" cy="420" rx="5" ry="10" fill="#C9516E"/><ellipse cx="530" cy="420" rx="5" ry="10" fill="#C9516E"/>
+<ellipse cx="310" cy="130" rx="4" ry="8" fill="#E8B4B8"/><ellipse cx="490" cy="130" rx="4" ry="8" fill="#E8B4B8"/>
+<!-- Leaves -->
+<ellipse cx="245" cy="280" rx="8" ry="14" fill="#5B7A3A" transform="rotate(-20,245,280)" opacity="0.8"/>
+<ellipse cx="270" cy="320" rx="7" ry="12" fill="#5B7A3A" transform="rotate(15,270,320)" opacity="0.8"/>
+<ellipse cx="555" cy="280" rx="8" ry="14" fill="#5B7A3A" transform="rotate(20,555,280)" opacity="0.8"/>
+<ellipse cx="530" cy="320" rx="7" ry="12" fill="#5B7A3A" transform="rotate(-15,530,320)" opacity="0.8"/>
+<ellipse cx="350" cy="95" rx="6" ry="11" fill="#5B7A3A" transform="rotate(-30,350,95)" opacity="0.8"/>
+<ellipse cx="450" cy="95" rx="6" ry="11" fill="#5B7A3A" transform="rotate(30,450,95)" opacity="0.8"/>
+</g>
+<!-- Stone fountain -->
+<g filter="url(#watercolor)">
+<ellipse cx="400" cy="520" rx="90" ry="30" fill="url(#fountainG)"/>
+<rect x="360" y="440" width="80" height="80" rx="5" fill="url(#fountainG)"/>
+<ellipse cx="400" cy="440" rx="60" ry="20" fill="#B8B0A4"/>
+<ellipse cx="400" cy="445" rx="50" ry="15" fill="url(#waterG)"/>
+<rect x="390" y="380" width="20" height="60" fill="#B8B0A4"/>
+<ellipse cx="400" cy="380" rx="25" ry="10" fill="#C8C0B4"/>
+<ellipse cx="400" cy="383" rx="20" ry="7" fill="url(#waterG)"/>
+<!-- Water streams -->
+<path d="M395,385 Q380,410 370,440" stroke="#7AAFC8" stroke-width="1.5" fill="none" opacity="0.6"/>
+<path d="M405,385 Q420,410 430,440" stroke="#7AAFC8" stroke-width="1.5" fill="none" opacity="0.6"/>
+<path d="M400,378 Q400,360 400,345" stroke="#7AAFC8" stroke-width="1.5" fill="none" opacity="0.5"/>
+<ellipse cx="400" cy="343" rx="4" ry="3" fill="#B8D4E8" opacity="0.6"/>
+</g>
+<!-- Ground greenery -->
+<g filter="url(#watercolor)" opacity="0.6">
+<ellipse cx="200" cy="570" rx="80" ry="25" fill="#5B7A3A"/><ellipse cx="600" cy="570" rx="80" ry="25" fill="#5B7A3A"/>
+<ellipse cx="100" cy="580" rx="60" ry="20" fill="#6B8A4A"/><ellipse cx="700" cy="580" rx="60" ry="20" fill="#6B8A4A"/>
+</g>
+<!-- Foreground roses -->
+<g filter="url(#watercolor)">
+<circle cx="120" cy="500" r="22" fill="url(#roseBlush)"/><circle cx="118" cy="497" r="13" fill="url(#roseCream)" opacity="0.7"/>
+<circle cx="680" cy="490" r="20" fill="url(#roseDeep)"/><circle cx="678" cy="488" r="12" fill="#E8B4B8" opacity="0.6"/>
+<ellipse cx="160" cy="530" rx="6" ry="11" fill="#C9516E"/>
+<ellipse cx="640" cy="520" rx="6" ry="11" fill="#E8B4B8"/>
+<ellipse cx="140" cy="510" rx="8" ry="14" fill="#5B7A3A" transform="rotate(25,140,510)" opacity="0.8"/>
+<ellipse cx="660" cy="510" rx="8" ry="14" fill="#5B7A3A" transform="rotate(-25,660,510)" opacity="0.8"/>
+</g>
+<!-- Butterflies -->
+<g opacity="0.8">
+<g transform="translate(180,200) rotate(-15)">
+<ellipse cx="-8" cy="-3" rx="8" ry="5" fill="#C9A96E" opacity="0.7"/><ellipse cx="8" cy="-3" rx="8" ry="5" fill="#C9A96E" opacity="0.7"/>
+<ellipse cx="-5" cy="3" rx="5" ry="3" fill="#E8B4B8" opacity="0.7"/><ellipse cx="5" cy="3" rx="5" ry="3" fill="#E8B4B8" opacity="0.7"/>
+<line x1="0" y1="-5" x2="0" y2="5" stroke="#3A3A3A" stroke-width="1"/>
+</g>
+<g transform="translate(620,160) rotate(10)">
+<ellipse cx="-7" cy="-3" rx="7" ry="4.5" fill="#9B7CB8" opacity="0.7"/><ellipse cx="7" cy="-3" rx="7" ry="4.5" fill="#9B7CB8" opacity="0.7"/>
+<ellipse cx="-4" cy="3" rx="4" ry="2.5" fill="#C8A8D8" opacity="0.7"/><ellipse cx="4" cy="3" rx="4" ry="2.5" fill="#C8A8D8" opacity="0.7"/>
+<line x1="0" y1="-4" x2="0" y2="4" stroke="#3A3A3A" stroke-width="1"/>
+</g>
+<g transform="translate(350,250) rotate(-5)">
+<ellipse cx="-6" cy="-2" rx="6" ry="4" fill="#E8B4B8" opacity="0.7"/><ellipse cx="6" cy="-2" rx="6" ry="4" fill="#E8B4B8" opacity="0.7"/>
+<ellipse cx="-4" cy="2" rx="4" ry="2.5" fill="#FFF8E7" opacity="0.7"/><ellipse cx="4" cy="2" rx="4" ry="2.5" fill="#FFF8E7" opacity="0.7"/>
+<line x1="0" y1="-3" x2="0" y2="3" stroke="#3A3A3A" stroke-width="0.8"/>
+</g>
+</g>
+<!-- Gold accents -->
+<circle cx="400" cy="85" r="5" fill="url(#goldG)" opacity="0.6"/>
+<circle cx="250" cy="200" r="3" fill="url(#goldG)" opacity="0.5"/>
+<circle cx="550" cy="200" r="3" fill="url(#goldG)" opacity="0.5"/>
+</svg>

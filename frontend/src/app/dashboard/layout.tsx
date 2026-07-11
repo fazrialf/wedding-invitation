@@ -3,7 +3,7 @@ import '../globals.css'
 import { AuthProvider } from '@/lib/AuthContext'
 
 export const metadata: Metadata = {
-  title: 'Dashboard — Wedding Invitation',
+  title: 'Dashboard — Pelaminan',
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

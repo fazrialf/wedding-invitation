@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 80" width="600" height="80">
+  <defs>
+    <linearGradient id="goldLine" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#C9A96E" stop-opacity="0.4"/>
+      <stop offset="50%" stop-color="#C9A96E" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#C9A96E" stop-opacity="0.4"/>
+    </linearGradient>
+    <linearGradient id="medalGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#D4B87A"/>
+      <stop offset="100%" stop-color="#C9A96E"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Main horizontal gold line -->
+  <line x1="20" y1="40" x2="580" y2="40" stroke="url(#goldLine)" stroke-width="0.8"/>
+
+  <!-- Diamond endpoints -->
+  <rect x="17" y="37" width="6" height="6" transform="rotate(45,20,40)" fill="#C9A96E" opacity="0.9"/>
+  <rect x="577" y="37" width="6" height="6" transform="rotate(45,580,40)" fill="#C9A96E" opacity="0.9"/>
+
+  <!-- Central octagonal medallion -->
+  <polygon points="300,22 312,26 318,38 318,42 312,54 300,58 288,54 282,42 282,38 288,26" fill="none" stroke="#C9A96E" stroke-width="1" stroke-linejoin="round"/>
+  <polygon points="300,26 310,29 314,38 314,42 310,51 300,54 290,51 286,42 286,38 290,29" fill="none" stroke="#C9A96E" stroke-width="0.5" opacity="0.6"/>
+
+  <!-- Filigree pattern inside medallion -->
+  <circle cx="300" cy="40" r="6" fill="none" stroke="#C9A96E" stroke-width="0.5" opacity="0.7"/>
+  <line x1="300" y1="30" x2="300" y2="50" stroke="#C9A96E" stroke-width="0.4" opacity="0.5"/>
+  <line x1="290" y1="40" x2="310" y2="40" stroke="#C9A96E" stroke-width="0.4" opacity="0.5"/>
+  <circle cx="300" cy="40" r="2" fill="#C9A96E" opacity="0.6"/>
+  <!-- Diagonal filigree lines -->
+  <line x1="293" y1="33" x2="307" y2="47" stroke="#C9A96E" stroke-width="0.3" opacity="0.4"/>
+  <line x1="307" y1="33" x2="293" y2="47" stroke="#C9A96E" stroke-width="0.3" opacity="0.4"/>
+
+  <!-- Olive leaf pair 1 - left of center -->
+  <ellipse cx="150" cy="37" rx="10" ry="3" transform="rotate(-30,150,37)" fill="none" stroke="#8B9A6B" stroke-width="0.8"/>
+  <ellipse cx="150" cy="43" rx="10" ry="3" transform="rotate(30,150,43)" fill="none" stroke="#8B9A6B" stroke-width="0.8"/>
+
+  <!-- Olive leaf pair 2 - right of center -->
+  <ellipse cx="450" cy="37" rx="10" ry="3" transform="rotate(-30,450,37)" fill="none" stroke="#8B9A6B" stroke-width="0.8"/>
+  <ellipse cx="450" cy="43" rx="10" ry="3" transform="rotate(30,450,43)" fill="none" stroke="#8B9A6B" stroke-width="0.8"/>
+
+  <!-- Olive leaf pair 3 - far left -->
+  <ellipse cx="80" cy="37" rx="8" ry="2.5" transform="rotate(-25,80,37)" fill="none" stroke="#8B9A6B" stroke-width="0.7"/>
+  <ellipse cx="80" cy="43" rx="8" ry="2.5" transform="rotate(25,80,43)" fill="none" stroke="#8B9A6B" stroke-width="0.7"/>
+
+  <!-- Olive leaf pair 4 - far right -->
+  <ellipse cx="520" cy="37" rx="8" ry="2.5" transform="rotate(-25,520,37)" fill="none" stroke="#8B9A6B" stroke-width="0.7"/>
+  <ellipse cx="520" cy="43" rx="8" ry="2.5" transform="rotate(25,520,43)" fill="none" stroke="#8B9A6B" stroke-width="0.7"/>
+
+  <!-- Small accent dots between leaf pairs and medallion -->
+  <circle cx="210" cy="40" r="1.2" fill="#C9A96E" opacity="0.5"/>
+  <circle cx="390" cy="40" r="1.2" fill="#C9A96E" opacity="0.5"/>
+  <circle cx="55" cy="40" r="1" fill="#C9A96E" opacity="0.4"/>
+  <circle cx="545" cy="40" r="1" fill="#C9A96E" opacity="0.4"/>
+</svg>
