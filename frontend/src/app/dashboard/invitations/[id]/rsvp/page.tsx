@@ -1,12 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useAuth } from '@/lib/AuthContext'
 import { useRouter, useParams } from 'next/navigation'
 import DashboardSidebar from '@/components/studio/DashboardSidebar'
 import Link from 'next/link'
 import axios from 'axios'
 import toast, { Toaster } from 'react-hot-toast'
+import { motion } from 'framer-motion'
+import { IconDownload, IconUsers, IconUserCheck, IconUserX, IconUsersGroup } from '@tabler/icons-react'
 
 type Theme = 'light' | 'dark'
 
@@ -59,6 +61,36 @@ const themeTokens = {
   },
 }
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.08 } },
+}
+const cardVariants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+}
+
+function useCountUp(target: number, duration = 600) {
+  const [count, setCount] = useState(0)
+  const raf = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (target === 0) { setCount(0); return }
+    const start = performance.now()
+    const animate = (now: number) => {
+      const elapsed = now - start
+      const progress = Math.min(elapsed / duration, 1)
+      setCount(Math.floor(progress * target))
+      if (progress < 1) raf.current = requestAnimationFrame(animate)
+      else setCount(target)
+    }
+    raf.current = requestAnimationFrame(animate)
+    return () => { if (raf.current) cancelAnimationFrame(raf.current) }
+  }, [target, duration])
+
+  return count
+}
+
 function downloadCSV(data: RsvpEntry[], filename: string) {
   const headers = ['Nama Tamu', 'Kehadiran', 'Jumlah Tamu', 'Pesan', 'Tanggal']
   const rows = data.map(r => [
@@ -76,6 +108,25 @@ function downloadCSV(data: RsvpEntry[], filename: string) {
   a.download = filename
   a.click()
   URL.revokeObjectURL(url)
+}
+
+function StatCard({ label, value, color, icon, fetching }: {
+  label: string; value: number; color: string
+  icon: React.ReactNode; fetching: boolean
+}) {
+  const displayed = useCountUp(fetching ? 0 : value)
+  const t_stat = themeTokens.light // placeholder, actual token passed via className
+  return (
+    <div className="contents">
+      <p className="font-playfair text-2xl font-semibold" style={{ color }}>
+        {fetching ? '—' : displayed}
+      </p>
+      <p className="font-lato text-xs mt-1 flex items-center gap-1.5">
+        {icon}
+        {label}
+      </p>
+    </div>
+  )
 }
 
 export default function RsvpPage() {
@@ -123,6 +174,13 @@ export default function RsvpPage() {
   const tidak = rsvps.filter(r => r.attendance === 'tidak')
   const totalGuests = hadir.reduce((s, r) => s + r.guest_count, 0)
 
+  const stats = [
+    { label: 'Total Respons', value: rsvps.length,   color: '#6B3F2A', icon: <IconUsers size={12} /> },
+    { label: 'Hadir',         value: hadir.length,   color: '#15803d', icon: <IconUserCheck size={12} /> },
+    { label: 'Tidak Hadir',   value: tidak.length,   color: '#b91c1c', icon: <IconUserX size={12} /> },
+    { label: 'Total Tamu',    value: totalGuests,    color: '#C8A96E', icon: <IconUsersGroup size={12} /> },
+  ]
+
   return (
     <div className={`flex min-h-screen ${t.page} transition-colors duration-300`}>
       <Toaster position="top-right" />
@@ -156,27 +214,33 @@ export default function RsvpPage() {
             disabled={rsvps.length === 0}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-cinzel text-xs tracking-wider uppercase transition-all duration-200 disabled:opacity-40 ${t.btnOutline}`}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <IconDownload size={14} />
             Export CSV
           </button>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {[
-            { label: 'Total Respons',   value: rsvps.length,    color: '#6B3F2A' },
-            { label: 'Hadir',           value: hadir.length,    color: '#15803d' },
-            { label: 'Tidak Hadir',     value: tidak.length,    color: '#b91c1c' },
-            { label: 'Total Tamu',      value: totalGuests,     color: '#C8A96E' },
-          ].map((s, i) => (
-            <div key={i} className={`rounded-xl p-5 ${t.statCard}`}>
-              <p className="font-playfair text-2xl font-semibold" style={{ color: s.color }}>
-                {fetching ? '—' : s.value}
-              </p>
-              <p className={`font-lato text-xs mt-1 ${t.muted}`}>{s.label}</p>
-            </div>
-          ))}
-        </div>
+        <motion.div
+          className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {stats.map((s, i) => {
+            // eslint-disable-next-line react-hooks/rules-of-hooks
+            const displayed = useCountUp(fetching ? 0 : s.value)
+            return (
+              <motion.div key={i} variants={cardVariants} className={`rounded-xl p-5 ${t.statCard}`}>
+                <p className="font-playfair text-2xl font-semibold" style={{ color: s.color }}>
+                  {fetching ? '—' : displayed}
+                </p>
+                <p className={`font-lato text-xs mt-1 flex items-center gap-1.5 ${t.muted}`}>
+                  {s.icon}{s.label}
+                </p>
+              </motion.div>
+            )
+          })}
+        </motion.div>
 
         {/* Table */}
         <div className={`rounded-xl overflow-hidden ${t.card}`}>

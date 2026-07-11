@@ -15,6 +15,26 @@ Versioning follows [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATC
 
 ---
 
+## [0.6.0] — 2026-07-11
+### Added
+- `framer-motion@11.3.8` — page/card entrance animations across all dashboard pages
+- `recharts@2.12.7` — RSVP 7-day bar chart on dashboard home
+- `@tabler/icons-react@3.14.0` — replaces all inline SVG icon blobs
+- `clsx@2.1.1` — cleaner conditional classnames utility
+- `useCountUp` hook — animated number count-up on all stat cards
+- Dashboard: staggered stat card entrances, hero fade-in, animated activity feed
+- Dashboard: Recharts bar chart (RSVP per day, last 7 days) with Pelaminan color theme
+- Invitations list: staggered card entrance + AnimatePresence filter transitions + modal scale-in
+- RSVP page: staggered stat cards + count-up numbers + Tabler icon for CSV export button
+- Wishes page: staggered card grid + AnimatePresence exit animation + Tabler action icons
+- Sidebar: Tabler icons + Framer Motion spring slide-in on mobile drawer
+
+### Changed
+- All inline SVG icon objects removed from every dashboard page and sidebar
+- Dashboard stat icons now use color-tinted rounded icon badges
+
+---
+
 ## [0.5.0] — 2026-07-11
 ### Added
 - Dashboard home revamped: hero welcome bar, activity feed, plan info card,

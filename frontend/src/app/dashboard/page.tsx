@@ -1,11 +1,20 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useAuth } from '@/lib/AuthContext'
 import { useRouter } from 'next/navigation'
 import DashboardSidebar from '@/components/studio/DashboardSidebar'
 import Link from 'next/link'
 import axios from 'axios'
+import { motion } from 'framer-motion'
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
+} from 'recharts'
+import {
+  IconMail, IconMailCheck, IconUsers, IconHeartHandshake,
+  IconPlus, IconCalendar, IconTrophy, IconChecklist,
+  IconArrowRight, IconCircleCheck,
+} from '@tabler/icons-react'
 
 type Theme = 'light' | 'dark'
 
@@ -59,6 +68,24 @@ function getGreeting() {
   return 'Selamat Malam'
 }
 
+function useCountUp(target: number, duration = 700) {
+  const [count, setCount] = useState(0)
+  const raf = useRef<number | null>(null)
+  useEffect(() => {
+    if (target === 0) { setCount(0); return }
+    const start = performance.now()
+    const animate = (now: number) => {
+      const progress = Math.min((now - start) / duration, 1)
+      setCount(Math.floor(progress * target))
+      if (progress < 1) raf.current = requestAnimationFrame(animate)
+      else setCount(target)
+    }
+    raf.current = requestAnimationFrame(animate)
+    return () => { if (raf.current) cancelAnimationFrame(raf.current) }
+  }, [target, duration])
+  return count
+}
+
 const tk = {
   light: {
     page:         'bg-[#FAF7F2]',
@@ -74,10 +101,12 @@ const tk = {
     actRsvp:      'bg-emerald-100 text-emerald-700',
     actWish:      'bg-[#E8DCC8] text-[#6B3F2A]',
     progress:     'bg-[#E8DCC8]',
-    progressFill: 'bg-[#C8A96E]',
+    progressFill: 'bg-[#6B3F2A]',
     countdownBg:  'bg-gradient-to-br from-[#6B3F2A] to-[#2C1A0E]',
     tipDone:      'text-emerald-600',
     rowHover:     'hover:bg-[#FAF7F2]',
+    chartColor:   '#C8A96E',
+    chartBg:      '#FAF7F2',
   },
   dark: {
     page:         'bg-[#1C0F07]',
@@ -97,7 +126,35 @@ const tk = {
     countdownBg:  'bg-gradient-to-br from-[#3D2410] to-[#2C1A0E]',
     tipDone:      'text-emerald-400',
     rowHover:     'hover:bg-[#3D2410]/60',
+    chartColor:   '#C8A96E',
+    chartBg:      '#3D2410',
   },
+}
+
+// Animation variants
+const fadeUp = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, transition: { duration: 0.35 } } }
+const stagger = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.08 } } }
+
+// Build last-7-days RSVP chart data from activity feed
+function buildChartData(activity: ActivityItem[]) {
+  const days: { date: string; label: string; count: number }[] = []
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date()
+    d.setDate(d.getDate() - i)
+    d.setHours(0, 0, 0, 0)
+    const key = d.toISOString().slice(0, 10)
+    days.push({
+      date: key,
+      label: d.toLocaleDateString('id-ID', { weekday: 'short' }),
+      count: 0,
+    })
+  }
+  activity.filter(a => a.type === 'rsvp').forEach(a => {
+    const key = new Date(a.created_at).toISOString().slice(0, 10)
+    const slot = days.find(d => d.date === key)
+    if (slot) slot.count++
+  })
+  return days
 }
 
 export default function DashboardPage() {
@@ -165,282 +222,314 @@ export default function DashboardPage() {
           }
         }))
 
+        feeds.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        setActivity(feeds.slice(0, 10))
         setTotalRsvp(rsvpCount)
         setTotalWishes(wishCount)
-        feeds.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-        setActivity(feeds.slice(0, 12))
       })
+      .catch(() => {})
       .finally(() => setFetching(false))
   }, [user])
 
   if (loading || !user) return null
 
-  const theme_tokens = tk[theme]
-  const planKey = (user as any).plan || 'free'
-  const plan = PLAN_LIMITS[planKey] || PLAN_LIMITS.free
-  const totalPublished = invitations.filter(i => i.is_published).length
+  const t = tk[theme]
+  const plan = (user as any).plan || 'free'
+  const planInfo = PLAN_LIMITS[plan] || PLAN_LIMITS.free
+  const published = invitations.filter(i => i.is_published)
   const upcoming = invitations
-    .filter(i => daysUntil(i.wedding_date) >= 0)
-    .sort((a, b) => daysUntil(a.wedding_date) - daysUntil(b.wedding_date))
+    .filter(i => i.wedding_date && daysUntil(i.wedding_date) >= 0)
+    .sort((a, b) => new Date(a.wedding_date).getTime() - new Date(b.wedding_date).getTime())
     .slice(0, 3)
+  const tipsChecked = TIPS.filter(tip => tip.checkFn(invitations)).length
+  const chartData = buildChartData(activity)
 
-  const tips = TIPS.map(tip => ({ ...tip, done: tip.checkFn(invitations) }))
-  const tipsCompleted = tips.filter(t => t.done).length
-  const today = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
-  const usagePct = Math.min(100, (invitations.length / plan.invitations) * 100)
+  // count-up values (hooks at top level via array — use individual hooks)
+  const countInv     = useCountUp(fetching ? 0 : invitations.length)
+  const countPub     = useCountUp(fetching ? 0 : published.length)
+  const countRsvp    = useCountUp(fetching ? 0 : totalRsvp)
+  const countWishes  = useCountUp(fetching ? 0 : totalWishes)
+
+  const stats = [
+    { label: 'Total Undangan', value: countInv,    color: '#6B3F2A', icon: <IconMail size={16} /> },
+    { label: 'Dipublikasikan', value: countPub,    color: '#C8A96E', icon: <IconMailCheck size={16} /> },
+    { label: 'Total RSVP',     value: countRsvp,   color: '#15803d', icon: <IconUsers size={16} /> },
+    { label: 'Ucapan Masuk',   value: countWishes, color: '#8B1A1A', icon: <IconHeartHandshake size={16} /> },
+  ]
 
   return (
-    <div className={`flex min-h-screen ${theme_tokens.page} transition-colors duration-300`}>
+    <div className={`flex min-h-screen ${t.page} transition-colors duration-300`}>
       <DashboardSidebar />
 
-      <main className="flex-1 min-w-0 overflow-auto">
+      <main className="flex-1 p-6 lg:p-10 min-w-0">
 
-        {/* ── Hero welcome bar ── */}
-        <div className={`${theme_tokens.heroBg} px-6 lg:px-10 py-8`}>
-          <div className="flex items-center justify-between gap-4 flex-wrap">
+        {/* ── Hero bar ── */}
+        <motion.div
+          initial={{ opacity: 0, y: -12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className={`rounded-2xl px-7 py-6 mb-8 text-white ${t.heroBg}`}
+        >
+          <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="font-cinzel text-xs tracking-[0.25em] uppercase text-[#C8A96E] mb-1">{today}</p>
-              <h1 className="font-cormorant text-2xl lg:text-3xl italic font-semibold text-[#FAF7F2]">
-                {getGreeting()}, {(user as any).name?.split(' ')[0] || 'Pengguna'} 👋
+              <p className="font-cinzel text-xs tracking-widest uppercase opacity-70 mb-1">
+                {getGreeting()},
+              </p>
+              <h1 className="font-playfair text-2xl lg:text-3xl font-semibold">
+                {(user as any).name || (user as any).email?.split('@')[0] || 'Pengguna'} 👋
               </h1>
-              <p className="font-lato text-sm text-[#E8DCC8]/70 mt-1">
-                Pantau semua aktivitas undangan digital Anda dari sini.
+              <p className="font-lato text-sm opacity-70 mt-1">
+                Kelola undangan digital Anda dari satu tempat.
               </p>
             </div>
             <Link
               href="/dashboard/invitations/new"
-              className="flex items-center gap-2 px-5 py-3 rounded-xl font-cinzel text-xs tracking-wider uppercase bg-[#C8A96E] hover:bg-[#E8DCC8] text-[#2C1A0E] transition-all duration-200 flex-shrink-0"
+              className="hidden sm:flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 font-cinzel text-xs tracking-wider uppercase transition-all duration-200 whitespace-nowrap"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-              </svg>
+              <IconPlus size={14} />
               Buat Undangan
             </Link>
           </div>
+        </motion.div>
+
+        {/* ── Stat cards ── */}
+        <motion.div
+          className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
+          variants={stagger}
+          initial="hidden"
+          animate="visible"
+        >
+          {stats.map((s, i) => (
+            <motion.div key={i} variants={fadeUp} className={`rounded-xl p-5 ${t.card}`}>
+              <div className={`inline-flex items-center justify-center w-9 h-9 rounded-lg mb-3`}
+                style={{ background: s.color + '20', color: s.color }}>
+                {s.icon}
+              </div>
+              <p className="font-playfair text-2xl font-semibold" style={{ color: s.color }}>
+                {fetching ? '—' : s.value}
+              </p>
+              <p className={`font-lato text-xs mt-1 ${t.muted}`}>{s.label}</p>
+            </motion.div>
+          ))}
+        </motion.div>
+
+        {/* ── Two-column: Chart + Activity ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
+
+          {/* RSVP Bar Chart — 3/5 */}
+          <motion.div
+            variants={fadeUp} initial="hidden" animate="visible"
+            className={`lg:col-span-3 rounded-xl p-6 ${t.card}`}
+          >
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h2 className={`font-playfair text-base font-semibold ${t.heading}`}>RSVP 7 Hari Terakhir</h2>
+                <p className={`font-lato text-xs mt-0.5 ${t.muted}`}>Respons yang masuk per hari</p>
+              </div>
+              <IconUsers size={18} style={{ color: '#C8A96E' }} />
+            </div>
+            {fetching ? (
+              <div className="h-40 flex items-center justify-center">
+                <p className={`font-lato text-sm ${t.muted}`}>Memuat...</p>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={160}>
+                <BarChart data={chartData} barSize={28} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
+                  <XAxis
+                    dataKey="label"
+                    tick={{ fontFamily: 'Lato', fontSize: 11, fill: theme === 'light' ? '#6B3F2A99' : '#C8A96E80' }}
+                    axisLine={false} tickLine={false}
+                  />
+                  <YAxis
+                    allowDecimals={false}
+                    tick={{ fontFamily: 'Lato', fontSize: 10, fill: theme === 'light' ? '#6B3F2A99' : '#C8A96E80' }}
+                    axisLine={false} tickLine={false}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      background: t.chartBg,
+                      border: `1px solid ${theme === 'light' ? '#E8DCC8' : '#4A2E18'}`,
+                      borderRadius: 8,
+                      fontFamily: 'Lato',
+                      fontSize: 12,
+                      color: theme === 'light' ? '#2C1A0E' : '#E8DCC8',
+                    }}
+                    labelFormatter={(l) => `Hari: ${l}`}
+                    formatter={(v: any) => [`${v} RSVP`, '']}
+                    cursor={{ fill: theme === 'light' ? '#E8DCC820' : '#C8A96E10' }}
+                  />
+                  <Bar dataKey="count" radius={[6, 6, 0, 0]}>
+                    {chartData.map((entry, index) => (
+                      <Cell
+                        key={index}
+                        fill={entry.count > 0 ? '#C8A96E' : (theme === 'light' ? '#E8DCC8' : '#4A2E18')}
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </motion.div>
+
+          {/* Activity Feed — 2/5 */}
+          <motion.div
+            variants={fadeUp} initial="hidden" animate="visible"
+            className={`lg:col-span-2 rounded-xl overflow-hidden ${t.card}`}
+          >
+            <div className={`px-5 py-4 border-b ${t.divider} flex items-center justify-between`}>
+              <h2 className={`font-playfair text-base font-semibold ${t.heading}`}>Aktivitas Terbaru</h2>
+            </div>
+            {fetching ? (
+              <div className="p-6 text-center">
+                <p className={`font-lato text-sm ${t.muted}`}>Memuat...</p>
+              </div>
+            ) : activity.length === 0 ? (
+              <div className="p-8 text-center">
+                <p className={`font-lato text-sm ${t.muted}`}>Belum ada aktivitas.</p>
+              </div>
+            ) : (
+              <div className={`divide-y ${t.divideBg} max-h-[220px] overflow-y-auto`}>
+                {activity.map((a, i) => (
+                  <div key={i} className={`px-5 py-3 flex items-start gap-3 ${t.rowHover} transition-colors`}>
+                    <span className={`mt-0.5 px-1.5 py-0.5 rounded text-[9px] font-cinzel tracking-wider uppercase shrink-0 ${a.type === 'rsvp' ? t.actRsvp : t.actWish}`}>
+                      {a.type === 'rsvp' ? 'RSVP' : 'Ucapan'}
+                    </span>
+                    <div className="min-w-0">
+                      <p className={`font-lato text-xs font-semibold truncate ${t.heading}`}>{a.guest_name}</p>
+                      <p className={`font-lato text-[10px] truncate ${t.muted}`}>{a.invitation_name}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </motion.div>
         </div>
 
-        <div className="p-6 lg:p-10 space-y-8">
+        {/* ── Bottom row: Plan info + Checklist + Countdowns ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          {/* ── Stats row ── */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              { label: 'Total Undangan',  value: invitations.length, icon: '✉️', color: '#6B3F2A', link: '/dashboard/invitations' },
-              { label: 'Dipublikasikan',  value: totalPublished,      icon: '🌐', color: '#15803d', link: '/dashboard/invitations' },
-              { label: 'Total RSVP',      value: totalRsvp,           icon: '👥', color: '#C8A96E', link: '' },
-              { label: 'Ucapan Masuk',    value: totalWishes,         icon: '💬', color: '#8B1A1A', link: '' },
-            ].map((s, i) => (
-              <div key={i} className={`rounded-xl p-5 ${theme_tokens.card}`}>
-                <div className="flex items-start justify-between mb-3">
-                  <span className="text-2xl">{s.icon}</span>
-                  {s.link && (
-                    <Link href={s.link} className={`font-cinzel text-[10px] tracking-wider uppercase ${theme_tokens.muted} hover:opacity-100 transition-opacity`}>
-                      Lihat →
-                    </Link>
-                  )}
-                </div>
-                <p className="font-playfair text-3xl font-semibold" style={{ color: s.color }}>
-                  {fetching ? '—' : s.value}
-                </p>
-                <p className={`font-lato text-xs mt-1 ${theme_tokens.muted}`}>{s.label}</p>
+          {/* Plan info */}
+          <motion.div variants={fadeUp} initial="hidden" animate="visible" className={`rounded-xl p-6 ${t.card}`}>
+            <div className="flex items-center gap-2 mb-4">
+              <IconTrophy size={16} style={{ color: planInfo.color }} />
+              <h2 className={`font-playfair text-base font-semibold ${t.heading}`}>Paket {planInfo.label}</h2>
+            </div>
+            <div className="mb-3">
+              <div className="flex justify-between mb-1.5">
+                <span className={`font-lato text-xs ${t.muted}`}>Undangan digunakan</span>
+                <span className={`font-lato text-xs font-semibold ${t.sub}`}>
+                  {invitations.length} / {planInfo.invitations}
+                </span>
               </div>
-            ))}
-          </div>
-
-          {/* ── Main 2-col grid ── */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-            {/* Activity feed — 2/3 */}
-            <div className={`lg:col-span-2 rounded-xl overflow-hidden ${theme_tokens.card}`}>
-              <div className={`px-5 py-4 border-b ${theme_tokens.divider} flex items-center justify-between`}>
-                <h2 className={`font-playfair text-base font-semibold ${theme_tokens.heading}`}>Aktivitas Terbaru</h2>
-                <span className={`font-cinzel text-[10px] tracking-wider uppercase ${theme_tokens.muted}`}>Semua undangan</span>
+              <div className={`h-1.5 rounded-full ${t.progress}`}>
+                <div
+                  className={`h-1.5 rounded-full transition-all duration-700 ${t.progressFill}`}
+                  style={{ width: `${Math.min((invitations.length / planInfo.invitations) * 100, 100)}%` }}
+                />
               </div>
+            </div>
+            {planInfo.next && (
+              <Link
+                href="#"
+                className={`mt-4 flex items-center justify-center gap-2 w-full py-2.5 rounded-lg font-cinzel text-xs tracking-wider uppercase transition-all duration-200 ${t.btnPrimary}`}
+              >
+                Upgrade ke {planInfo.next}
+                <IconArrowRight size={13} />
+              </Link>
+            )}
+          </motion.div>
 
-              {fetching ? (
-                <div className="p-10 text-center">
-                  <p className={`font-lato text-sm ${theme_tokens.muted}`}>Memuat aktivitas...</p>
-                </div>
-              ) : activity.length === 0 ? (
-                <div className="p-12 text-center">
-                  <p className="text-3xl mb-3">🌸</p>
-                  <p className={`font-playfair text-base font-semibold mb-1 ${theme_tokens.heading}`}>Belum ada aktivitas</p>
-                  <p className={`font-lato text-xs ${theme_tokens.muted}`}>RSVP dan ucapan tamu akan muncul di sini setelah undangan dibagikan.</p>
-                </div>
-              ) : (
-                <div className={`divide-y ${theme_tokens.divideBg}`}>
-                  {activity.map((a, i) => (
-                    <div key={i} className={`px-5 py-3.5 flex items-start gap-3 transition-colors ${theme_tokens.rowHover}`}>
-                      <span className={`mt-0.5 px-2 py-0.5 rounded-full font-cinzel text-[10px] tracking-wider flex-shrink-0 ${
-                        a.type === 'rsvp' ? theme_tokens.actRsvp : theme_tokens.actWish
-                      }`}>
-                        {a.type === 'rsvp' ? 'RSVP' : 'Ucapan'}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <p className={`font-lato text-sm font-medium ${theme_tokens.heading}`}>
-                          {a.guest_name}
-                          {a.type === 'rsvp' && (
-                            <span className={`ml-2 font-normal text-xs ${a.attendance === 'hadir' ? 'text-emerald-500' : 'text-red-400'}`}>
-                              — {a.attendance === 'hadir' ? 'Hadir' : 'Tidak Hadir'}
-                            </span>
-                          )}
-                        </p>
-                        {a.message && (
-                          <p className={`font-lato text-xs truncate mt-0.5 ${theme_tokens.muted}`}>"{a.message}"</p>
-                        )}
-                        <p className={`font-lato text-xs mt-0.5 ${theme_tokens.muted}`}>
-                          {a.invitation_name} · {new Date(a.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                      </div>
-                      <Link
-                        href={`/dashboard/invitations/${a.invitation_id}/${a.type === 'rsvp' ? 'rsvp' : 'wishes'}`}
-                        className={`flex-shrink-0 font-cinzel text-[10px] tracking-wider uppercase ${theme_tokens.muted} hover:opacity-100 transition-opacity`}
-                      >
-                        Detail →
+          {/* Getting started checklist */}
+          <motion.div variants={fadeUp} initial="hidden" animate="visible" className={`rounded-xl p-6 ${t.card}`}>
+            <div className="flex items-center gap-2 mb-4">
+              <IconChecklist size={16} style={{ color: '#C8A96E' }} />
+              <h2 className={`font-playfair text-base font-semibold ${t.heading}`}>
+                Mulai ({tipsChecked}/{TIPS.length})
+              </h2>
+            </div>
+            <div className="space-y-2.5">
+              {TIPS.map((tip, i) => {
+                const done = tip.checkFn(invitations)
+                return (
+                  <div key={i} className="flex items-center gap-2.5">
+                    <IconCircleCheck
+                      size={15}
+                      style={{ color: done ? '#15803d' : (theme === 'light' ? '#C8A96E60' : '#C8A96E40'), flexShrink: 0 }}
+                    />
+                    {tip.link && !done ? (
+                      <Link href={tip.link} className={`font-lato text-xs hover:underline ${done ? t.tipDone : t.sub}`}>
+                        {tip.text}
                       </Link>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    ) : (
+                      <span className={`font-lato text-xs ${done ? t.tipDone : t.muted} ${done ? 'line-through' : ''}`}>
+                        {tip.text}
+                      </span>
+                    )}
+                  </div>
+                )
+              })}
             </div>
+          </motion.div>
 
-            {/* Right column — 1/3 */}
-            <div className="space-y-5">
-
-              {/* Plan info */}
-              <div className={`rounded-xl p-5 ${theme_tokens.card}`}>
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className={`font-playfair text-base font-semibold ${theme_tokens.heading}`}>Paket Saya</h2>
-                  <span
-                    className="px-2.5 py-1 rounded-full font-cinzel text-[10px] tracking-wider"
-                    style={{ background: plan.color + '22', color: plan.color }}
-                  >
-                    {plan.label}
-                  </span>
-                </div>
-
-                <div className="mb-1.5 flex justify-between">
-                  <p className={`font-lato text-xs ${theme_tokens.muted}`}>Undangan digunakan</p>
-                  <p className={`font-lato text-xs font-medium ${theme_tokens.sub}`}>{invitations.length} / {plan.invitations}</p>
-                </div>
-                <div className={`h-2 rounded-full mb-4 ${theme_tokens.progress}`}>
-                  <div className={`h-2 rounded-full transition-all duration-700 ${theme_tokens.progressFill}`} style={{ width: `${usagePct}%` }} />
-                </div>
-
-                <div className={`space-y-1.5 font-lato text-xs mb-5 ${theme_tokens.muted}`}>
-                  <p>✓ {plan.invitations} undangan maksimal</p>
-                  <p>✓ Template tidak terbatas</p>
-                  <p>✓ RSVP dan ucapan tidak terbatas</p>
-                  {planKey === 'free' && <p className="text-amber-500">✗ Custom domain</p>}
-                  {planKey === 'free' && <p className="text-amber-500">✗ Musik latar</p>}
-                  {planKey === 'free' && <p className="text-amber-500">✗ Analitik lanjutan</p>}
-                </div>
-
-                {plan.next && (
-                  <button className={`w-full py-2.5 rounded-lg font-cinzel text-xs tracking-wider uppercase transition-all duration-200 ${theme_tokens.btnPrimary}`}>
-                    Upgrade ke {plan.next} ✦
-                  </button>
-                )}
-              </div>
-
-              {/* Getting started */}
-              <div className={`rounded-xl p-5 ${theme_tokens.card}`}>
-                <div className="flex items-center justify-between mb-2">
-                  <h2 className={`font-playfair text-base font-semibold ${theme_tokens.heading}`}>Mulai dari Sini</h2>
-                  <span className={`font-cinzel text-[10px] tracking-wider uppercase ${theme_tokens.muted}`}>{tipsCompleted}/{tips.length}</span>
-                </div>
-                <div className={`h-1.5 rounded-full mb-4 ${theme_tokens.progress}`}>
-                  <div className={`h-1.5 rounded-full transition-all duration-700 ${theme_tokens.progressFill}`} style={{ width: `${(tipsCompleted / tips.length) * 100}%` }} />
-                </div>
-                <div className="space-y-2.5">
-                  {tips.map((tip, i) => (
-                    <div key={i} className="flex items-center gap-2.5">
-                      <div className={`w-4 h-4 rounded-full flex-shrink-0 flex items-center justify-center border transition-colors ${
-                        tip.done ? 'bg-emerald-500 border-emerald-500' : theme_tokens.divider
-                      }`}>
-                        {tip.done && (
-                          <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
-                            <polyline points="2 6 5 9 10 3"/>
-                          </svg>
-                        )}
-                      </div>
-                      {tip.link ? (
-                        <Link href={tip.link} className={`font-lato text-xs transition-colors ${tip.done ? theme_tokens.tipDone + ' line-through opacity-60' : theme_tokens.sub} hover:opacity-80`}>
-                          {tip.text}
-                        </Link>
-                      ) : (
-                        <p className={`font-lato text-xs ${tip.done ? theme_tokens.tipDone + ' line-through opacity-60' : theme_tokens.muted}`}>{tip.text}</p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
+          {/* Upcoming weddings */}
+          <motion.div variants={fadeUp} initial="hidden" animate="visible" className={`rounded-xl p-6 ${t.card}`}>
+            <div className="flex items-center gap-2 mb-4">
+              <IconCalendar size={16} style={{ color: '#C8A96E' }} />
+              <h2 className={`font-playfair text-base font-semibold ${t.heading}`}>Hari Pernikahan</h2>
             </div>
-          </div>
-
-          {/* ── Upcoming countdowns ── */}
-          {upcoming.length > 0 && (
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className={`font-playfair text-lg font-semibold ${theme_tokens.heading}`}>Hari Pernikahan Mendekat</h2>
-                <Link href="/dashboard/invitations" className={`font-cinzel text-xs tracking-wider uppercase ${theme_tokens.muted} hover:opacity-100 transition-opacity`}>
-                  Semua →
-                </Link>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {upcoming.length === 0 ? (
+              <p className={`font-lato text-sm ${t.muted}`}>Belum ada undangan dengan tanggal mendatang.</p>
+            ) : (
+              <div className="space-y-3">
                 {upcoming.map(inv => {
                   const days = daysUntil(inv.wedding_date)
                   return (
-                    <div key={inv.id} className={`rounded-xl p-5 relative overflow-hidden ${theme_tokens.countdownBg}`}>
-                      <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full border border-[#C8A96E]/20 pointer-events-none" />
-                      <div className="absolute -right-2 -top-2 w-12 h-12 rounded-full border border-[#C8A96E]/10 pointer-events-none" />
-                      <p className="font-cinzel text-[10px] tracking-[0.2em] uppercase text-[#C8A96E]/70 mb-2">
-                        {inv.is_published ? '🌐 Aktif' : '📝 Draft'}
+                    <div key={inv.id} className={`rounded-lg px-4 py-3 ${t.countdownBg} text-white`}>
+                      <p className="font-cinzel text-[10px] tracking-wider uppercase opacity-70 mb-0.5">
+                        {days === 0 ? 'Hari ini! 🎉' : `${days} hari lagi`}
                       </p>
-                      <h3 className="font-cormorant text-lg italic font-semibold text-[#FAF7F2] leading-tight">{inv.bride_name}</h3>
-                      <p className="font-cormorant text-sm text-[#C8A96E] italic mb-3">& {inv.groom_name}</p>
-                      <div className="flex items-end justify-between">
-                        <div>
-                          <p className="font-playfair text-4xl font-bold text-[#FAF7F2]">{days === 0 ? '🎉' : days}</p>
-                          <p className="font-lato text-xs text-[#E8DCC8]/60">{days === 0 ? 'Hari ini!' : 'hari lagi'}</p>
-                        </div>
-                        <Link
-                          href={`/dashboard/invitations/${inv.id}/rsvp`}
-                          className="font-cinzel text-[10px] tracking-wider uppercase px-3 py-2 rounded-lg bg-[#C8A96E]/20 hover:bg-[#C8A96E]/30 text-[#C8A96E] transition-all"
-                        >
-                          RSVP →
-                        </Link>
-                      </div>
-                      <p className="font-lato text-xs mt-2 text-[#E8DCC8]/50">
+                      <p className="font-playfair text-sm font-semibold truncate">
+                        {inv.bride_name} & {inv.groom_name}
+                      </p>
+                      <p className="font-lato text-[10px] opacity-60 mt-0.5">
                         {new Date(inv.wedding_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
                       </p>
                     </div>
                   )
                 })}
               </div>
-            </div>
-          )}
-
-          {/* ── Empty state ── */}
-          {!fetching && invitations.length === 0 && (
-            <div className={`rounded-xl p-12 text-center border-2 border-dashed ${theme_tokens.divider}`}>
-              <p className="text-4xl mb-4">💌</p>
-              <h3 className={`font-playfair text-xl font-semibold mb-2 ${theme_tokens.heading}`}>Mulai perjalanan Anda</h3>
-              <p className={`font-lato text-sm mb-6 max-w-sm mx-auto ${theme_tokens.muted}`}>
-                Buat undangan digital pertama dan bagikan momen spesial Anda kepada orang-orang tercinta.
-              </p>
-              <Link
-                href="/dashboard/invitations/new"
-                className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-cinzel text-xs tracking-wider uppercase transition-all ${theme_tokens.btnPrimary}`}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                </svg>
-                Buat Undangan Sekarang
-              </Link>
-            </div>
-          )}
-
+            )}
+          </motion.div>
         </div>
+
+        {/* ── Empty state: no invitations yet ── */}
+        {!fetching && invitations.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+            className={`mt-8 rounded-2xl p-12 text-center border-2 border-dashed ${t.divider}`}
+          >
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4"
+              style={{ background: '#C8A96E20', color: '#C8A96E' }}>
+              <IconMail size={28} />
+            </div>
+            <h2 className={`font-playfair text-xl font-semibold mb-2 ${t.heading}`}>
+              Belum ada undangan
+            </h2>
+            <p className={`font-lato text-sm mb-6 max-w-sm mx-auto ${t.muted}`}>
+              Buat undangan digital pertama dan bagikan momen spesial Anda kepada orang-orang tercinta.
+            </p>
+            <Link
+              href="/dashboard/invitations/new"
+              className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-cinzel text-xs tracking-wider uppercase transition-all ${t.btnPrimary}`}
+            >
+              <IconPlus size={14} />
+              Buat Undangan Sekarang
+            </Link>
+          </motion.div>
+        )}
+
       </main>
     </div>
   )

@@ -1,12 +1,17 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useAuth } from '@/lib/AuthContext'
 import { useRouter, useParams } from 'next/navigation'
 import DashboardSidebar from '@/components/studio/DashboardSidebar'
 import Link from 'next/link'
 import axios from 'axios'
 import toast, { Toaster } from 'react-hot-toast'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  IconHeartHandshake, IconEye, IconEyeOff, IconTrash,
+  IconMessage, IconCircleCheck, IconClock,
+} from '@tabler/icons-react'
 
 type Theme = 'light' | 'dark'
 
@@ -58,6 +63,36 @@ const themeTokens = {
   },
 }
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.06 } },
+}
+const cardVariants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.25 } },
+}
+
+function useCountUp(target: number, duration = 600) {
+  const [count, setCount] = useState(0)
+  const raf = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (target === 0) { setCount(0); return }
+    const start = performance.now()
+    const animate = (now: number) => {
+      const elapsed = now - start
+      const progress = Math.min(elapsed / duration, 1)
+      setCount(Math.floor(progress * target))
+      if (progress < 1) raf.current = requestAnimationFrame(animate)
+      else setCount(target)
+    }
+    raf.current = requestAnimationFrame(animate)
+    return () => { if (raf.current) cancelAnimationFrame(raf.current) }
+  }, [target, duration])
+
+  return count
+}
+
 export default function WishesPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
@@ -96,7 +131,7 @@ export default function WishesPage() {
       .finally(() => setFetching(false))
   }, [user, id])
 
-  const toggleApproval = async (wish: Wish) => {
+  async function toggleApproval(wish: Wish) {
     try {
       await axios.patch(`/api/wishes/${wish.id}`, { is_approved: !wish.is_approved })
       setWishes(prev => prev.map(w => w.id === wish.id ? { ...w, is_approved: !w.is_approved } : w))
@@ -106,7 +141,7 @@ export default function WishesPage() {
     }
   }
 
-  const deleteWish = async (wishId: string) => {
+  async function deleteWish(wishId: string) {
     try {
       await axios.delete(`/api/wishes/${wishId}`)
       setWishes(prev => prev.filter(w => w.id !== wishId))
@@ -120,7 +155,17 @@ export default function WishesPage() {
 
   const t = themeTokens[theme]
   const approved = wishes.filter(w => w.is_approved)
-  const hidden = wishes.filter(w => !w.is_approved)
+  const pending  = wishes.filter(w => !w.is_approved)
+
+  const totalCount    = useCountUp(fetching ? 0 : wishes.length)
+  const approvedCount = useCountUp(fetching ? 0 : approved.length)
+  const pendingCount  = useCountUp(fetching ? 0 : pending.length)
+
+  const stats = [
+    { label: 'Total Ucapan', value: totalCount,    color: '#6B3F2A', icon: <IconMessage size={12} /> },
+    { label: 'Ditampilkan',  value: approvedCount, color: '#15803d', icon: <IconCircleCheck size={12} /> },
+    { label: 'Tersembunyi',  value: pendingCount,  color: '#C8A96E', icon: <IconClock size={12} /> },
+  ]
 
   return (
     <div className={`flex min-h-screen ${t.page} transition-colors duration-300`}>
@@ -139,99 +184,116 @@ export default function WishesPage() {
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-8 gap-4">
-          <div>
-            <h1 className={`font-playfair text-2xl lg:text-3xl font-semibold ${t.heading}`}>
-              Ucapan & Doa
-            </h1>
-            {inv && (
-              <p className={`font-lato text-sm mt-1 ${t.muted}`}>
-                {inv.bride_name} & {inv.groom_name}
-              </p>
-            )}
-          </div>
+        <div className="mb-8">
+          <h1 className={`font-playfair text-2xl lg:text-3xl font-semibold ${t.heading}`}>
+            Ucapan & Doa
+          </h1>
+          {inv && (
+            <p className={`font-lato text-sm mt-1 ${t.muted}`}>
+              {inv.bride_name} & {inv.groom_name}
+            </p>
+          )}
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          {[
-            { label: 'Total Ucapan',   value: wishes.length,   color: '#6B3F2A' },
-            { label: 'Ditampilkan',    value: approved.length, color: '#15803d' },
-            { label: 'Disembunyikan',  value: hidden.length,   color: '#b45309' },
-          ].map((s, i) => (
-            <div key={i} className={`rounded-xl p-5 ${t.card}`}>
+        <motion.div
+          className="grid grid-cols-3 gap-4 mb-8"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {stats.map((s, i) => (
+            <motion.div key={i} variants={cardVariants} className={`rounded-xl p-5 ${t.card}`}>
               <p className="font-playfair text-2xl font-semibold" style={{ color: s.color }}>
                 {fetching ? '—' : s.value}
               </p>
-              <p className={`font-lato text-xs mt-1 ${t.muted}`}>{s.label}</p>
-            </div>
+              <p className={`font-lato text-xs mt-1 flex items-center gap-1.5 ${t.muted}`}>
+                {s.icon}{s.label}
+              </p>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
 
-        {/* Wishes grid */}
+        {/* Wishes Grid */}
         {fetching ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[1,2,3,4].map(i => <div key={i} className={`h-36 rounded-xl animate-pulse ${t.card}`} />)}
+          <div className="p-8 text-center">
+            <p className={`font-lato text-sm ${t.muted}`}>Memuat...</p>
           </div>
         ) : wishes.length === 0 ? (
-          <div className={`rounded-xl p-12 flex flex-col items-center text-center border-2 border-dashed ${t.divider}`}>
-            <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 ${t.iconBg}`}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-              </svg>
+          <div className="py-20 text-center">
+            <div className={`inline-flex items-center justify-center w-14 h-14 rounded-full mb-4 ${t.iconBg}`}>
+              <IconHeartHandshake size={22} />
             </div>
-            <h3 className={`font-playfair text-lg font-semibold mb-2 ${t.heading}`}>Belum ada ucapan</h3>
-            <p className={`font-lato text-sm ${t.muted}`}>Ucapan dari tamu akan muncul di sini setelah undangan dibagikan.</p>
+            <p className={`font-playfair text-lg font-semibold mb-2 ${t.heading}`}>Belum ada ucapan</p>
+            <p className={`font-lato text-sm ${t.muted}`}>Ucapan dari tamu akan muncul di sini.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {wishes.map(w => (
-              <div key={w.id} className={`rounded-xl p-5 transition-all duration-200 ${t.wishCard}`}>
-                {/* Quote mark */}
-                <div className={`font-playfair text-5xl leading-none mb-2 ${t.quoteMark}`}>"</div>
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            <AnimatePresence>
+              {wishes.map(w => (
+                <motion.div
+                  key={w.id}
+                  variants={cardVariants}
+                  layout
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className={`rounded-xl p-5 transition-all duration-200 ${t.wishCard}`}
+                >
+                  {/* Quote mark */}
+                  <span className={`font-playfair text-4xl leading-none ${t.quoteMark}`}>&ldquo;</span>
 
-                {/* Message */}
-                <p className={`font-lato text-sm leading-relaxed mb-4 ${t.subtext}`}>
-                  {w.message}
-                </p>
+                  {/* Message */}
+                  <p className={`font-lato text-sm leading-relaxed mt-1 mb-4 ${t.subtext}`}>
+                    {w.message}
+                  </p>
 
-                {/* Footer */}
-                <div className={`flex items-center justify-between pt-3 border-t ${t.divider}`}>
-                  <div>
-                    <p className={`font-cinzel text-xs tracking-wider ${t.heading}`}>{w.guest_name}</p>
-                    <p className={`font-lato text-xs mt-0.5 ${t.muted}`}>
-                      {new Date(w.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
-                    </p>
+                  {/* Footer */}
+                  <div className={`flex items-center justify-between pt-3 border-t ${t.divider}`}>
+                    <div>
+                      <p className={`font-cinzel text-xs font-semibold tracking-wide ${t.heading}`}>
+                        {w.guest_name}
+                      </p>
+                      <p className={`font-lato text-[10px] mt-0.5 ${t.muted}`}>
+                        {new Date(w.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      {/* Status badge */}
+                      <span className={`px-2 py-0.5 rounded-full font-cinzel text-[9px] tracking-wider mr-1 ${w.is_approved ? t.badge.approved : t.badge.pending}`}>
+                        {w.is_approved ? 'Tampil' : 'Tersembunyi'}
+                      </span>
+
+                      {/* Toggle visibility */}
+                      <button
+                        onClick={() => toggleApproval(w)}
+                        className={`p-1.5 rounded-lg transition-all duration-200 ${t.btnOutline}`}
+                        title={w.is_approved ? 'Sembunyikan' : 'Tampilkan'}
+                      >
+                        {w.is_approved
+                          ? <IconEyeOff size={13} />
+                          : <IconEye size={13} />
+                        }
+                      </button>
+
+                      {/* Delete */}
+                      <button
+                        onClick={() => deleteWish(w.id)}
+                        className={`p-1.5 rounded-lg transition-all duration-200 ${t.btnDanger}`}
+                        title="Hapus"
+                      >
+                        <IconTrash size={13} />
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`px-2 py-0.5 rounded-full font-cinzel text-[10px] tracking-wider ${
-                      w.is_approved ? t.badge.approved : t.badge.pending
-                    }`}>
-                      {w.is_approved ? 'Tampil' : 'Tersembunyi'}
-                    </span>
-                    <button
-                      onClick={() => toggleApproval(w)}
-                      className={`p-1.5 rounded-lg transition-all duration-200 ${t.btnOutline}`}
-                      title={w.is_approved ? 'Sembunyikan' : 'Tampilkan'}
-                    >
-                      {w.is_approved ? (
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                      ) : (
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                      )}
-                    </button>
-                    <button
-                      onClick={() => deleteWish(w.id)}
-                      className={`p-1.5 rounded-lg transition-all duration-200 ${t.btnDanger}`}
-                      title="Hapus"
-                    >
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </motion.div>
         )}
       </main>
     </div>
