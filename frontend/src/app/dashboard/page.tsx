@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation'
 import DashboardSidebar from '@/components/studio/DashboardSidebar'
 import Link from 'next/link'
 import axios from 'axios'
-import toast, { Toaster } from 'react-hot-toast'
 
 type Theme = 'light' | 'dark'
 
@@ -18,96 +17,86 @@ interface Invitation {
   wedding_date: string
   is_published: boolean
   theme_slug: string
-  rsvp_count?: number
-  wishes_count?: number
 }
 
-// Inline icons
-const Icons = {
-  undangan: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-      <polyline points="22,6 12,13 2,6"/>
-    </svg>
-  ),
-  rsvp: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-      <circle cx="9" cy="7" r="4"/>
-      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-      <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-    </svg>
-  ),
-  wishes: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-    </svg>
-  ),
-  published: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="20 6 9 17 4 12"/>
-    </svg>
-  ),
-  plus: (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-    </svg>
-  ),
-  edit: (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-    </svg>
-  ),
-  eye: (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-      <circle cx="12" cy="12" r="3"/>
-    </svg>
-  ),
-  calendar: (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-      <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
-      <line x1="3" y1="10" x2="21" y2="10"/>
-    </svg>
-  ),
+interface ActivityItem {
+  type: 'rsvp' | 'wish'
+  guest_name: string
+  message?: string
+  attendance?: string
+  created_at: string
+  invitation_name: string
+  invitation_id: string
 }
 
-const themeTokens = {
+const PLAN_LIMITS: Record<string, { invitations: number; label: string; color: string; next: string }> = {
+  free:     { invitations: 1,  label: 'Gratis',   color: '#6B3F2A', next: 'Pro' },
+  pro:      { invitations: 10, label: 'Pro',       color: '#C8A96E', next: 'Business' },
+  business: { invitations: 50, label: 'Business',  color: '#8B1A1A', next: '' },
+}
+
+const TIPS = [
+  { text: 'Buat undangan pertama Anda',  link: '/dashboard/invitations/new', checkFn: (invs: Invitation[]) => invs.length > 0 },
+  { text: 'Unggah foto pengantin',        link: '',                            checkFn: () => false },
+  { text: 'Pilih template dan warna',     link: '',                            checkFn: () => false },
+  { text: 'Publikasikan undangan',        link: '',                            checkFn: (invs: Invitation[]) => invs.some(i => i.is_published) },
+  { text: 'Bagikan link ke tamu',         link: '',                            checkFn: () => false },
+]
+
+function daysUntil(dateStr: string) {
+  const d = new Date(dateStr)
+  const now = new Date()
+  now.setHours(0, 0, 0, 0)
+  d.setHours(0, 0, 0, 0)
+  return Math.ceil((d.getTime() - now.getTime()) / 86400000)
+}
+
+function getGreeting() {
+  const h = new Date().getHours()
+  if (h < 11) return 'Selamat Pagi'
+  if (h < 15) return 'Selamat Siang'
+  if (h < 18) return 'Selamat Sore'
+  return 'Selamat Malam'
+}
+
+const tk = {
   light: {
-    page:        'bg-[#FAF7F2]',
-    main:        'bg-[#FAF7F2]',
-    card:        'bg-white border border-[#E8DCC8]',
-    cardHover:   'hover:shadow-md hover:border-[#C8A96E]',
-    heading:     'text-[#2C1A0E]',
-    subtext:     'text-[#6B3F2A]',
-    muted:       'text-[#6B3F2A]/60',
-    statNum:     'text-[#2C1A0E]',
-    iconBg:      'bg-[#E8DCC8]',
-    iconColor:   'text-[#6B3F2A]',
-    divider:     'border-[#E8DCC8]',
-    badge:       { published: 'bg-emerald-100 text-emerald-700', draft: 'bg-amber-100 text-amber-700' },
-    btnPrimary:  'bg-[#6B3F2A] hover:bg-[#2C1A0E] text-[#FAF7F2]',
-    btnOutline:  'border border-[#C8A96E] text-[#6B3F2A] hover:bg-[#E8DCC8]',
-    emptyBg:     'bg-[#E8DCC8]/30 border-2 border-dashed border-[#C8A96E]/40',
+    page:         'bg-[#FAF7F2]',
+    card:         'bg-white border border-[#E8DCC8]',
+    heading:      'text-[#2C1A0E]',
+    sub:          'text-[#6B3F2A]',
+    muted:        'text-[#6B3F2A]/60',
+    divider:      'border-[#E8DCC8]',
+    divideBg:     'divide-[#E8DCC8]',
+    btnPrimary:   'bg-[#6B3F2A] hover:bg-[#2C1A0E] text-[#FAF7F2]',
+    btnOutline:   'border border-[#C8A96E] text-[#6B3F2A] hover:bg-[#E8DCC8]',
+    heroBg:       'bg-gradient-to-r from-[#6B3F2A] to-[#2C1A0E]',
+    actRsvp:      'bg-emerald-100 text-emerald-700',
+    actWish:      'bg-[#E8DCC8] text-[#6B3F2A]',
+    progress:     'bg-[#E8DCC8]',
+    progressFill: 'bg-[#C8A96E]',
+    countdownBg:  'bg-gradient-to-br from-[#6B3F2A] to-[#2C1A0E]',
+    tipDone:      'text-emerald-600',
+    rowHover:     'hover:bg-[#FAF7F2]',
   },
   dark: {
-    page:        'bg-[#1C0F07]',
-    main:        'bg-[#1C0F07]',
-    card:        'bg-[#3D2410] border border-[#4A2E18]',
-    cardHover:   'hover:shadow-lg hover:border-[#C8A96E]/40',
-    heading:     'text-[#E8DCC8]',
-    subtext:     'text-[#C8A96E]',
-    muted:       'text-[#C8A96E]/50',
-    statNum:     'text-[#E8DCC8]',
-    iconBg:      'bg-[#6B3F2A]/30',
-    iconColor:   'text-[#C8A96E]',
-    divider:     'border-[#4A2E18]',
-    badge:       { published: 'bg-emerald-900/40 text-emerald-400', draft: 'bg-amber-900/40 text-amber-400' },
-    btnPrimary:  'bg-[#C8A96E] hover:bg-[#E8DCC8] text-[#2C1A0E]',
-    btnOutline:  'border border-[#C8A96E]/50 text-[#C8A96E] hover:bg-[#6B3F2A]/20',
-    emptyBg:     'bg-[#3D2410]/50 border-2 border-dashed border-[#C8A96E]/20',
+    page:         'bg-[#1C0F07]',
+    card:         'bg-[#3D2410] border border-[#4A2E18]',
+    heading:      'text-[#E8DCC8]',
+    sub:          'text-[#C8A96E]',
+    muted:        'text-[#C8A96E]/50',
+    divider:      'border-[#4A2E18]',
+    divideBg:     'divide-[#4A2E18]',
+    btnPrimary:   'bg-[#C8A96E] hover:bg-[#E8DCC8] text-[#2C1A0E]',
+    btnOutline:   'border border-[#C8A96E]/50 text-[#C8A96E] hover:bg-[#6B3F2A]/20',
+    heroBg:       'bg-gradient-to-r from-[#3D2410] to-[#1C0F07]',
+    actRsvp:      'bg-emerald-900/40 text-emerald-400',
+    actWish:      'bg-[#6B3F2A]/30 text-[#C8A96E]',
+    progress:     'bg-[#4A2E18]',
+    progressFill: 'bg-[#C8A96E]',
+    countdownBg:  'bg-gradient-to-br from-[#3D2410] to-[#2C1A0E]',
+    tipDone:      'text-emerald-400',
+    rowHover:     'hover:bg-[#3D2410]/60',
   },
 }
 
@@ -115,15 +104,14 @@ export default function DashboardPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
   const [invitations, setInvitations] = useState<Invitation[]>([])
+  const [activity, setActivity] = useState<ActivityItem[]>([])
+  const [totalRsvp, setTotalRsvp] = useState(0)
+  const [totalWishes, setTotalWishes] = useState(0)
   const [fetching, setFetching] = useState(true)
   const [theme, setTheme] = useState<Theme>('light')
 
-  // Auth guard
-  useEffect(() => {
-    if (!loading && !user) router.push('/login')
-  }, [user, loading, router])
+  useEffect(() => { if (!loading && !user) router.push('/login') }, [user, loading, router])
 
-  // Theme sync
   useEffect(() => {
     const stored = localStorage.getItem('pelaminan-theme') as Theme | null
     if (stored === 'light' || stored === 'dark') setTheme(stored)
@@ -135,178 +123,323 @@ export default function DashboardPage() {
     return () => window.removeEventListener('pelaminan-theme-change', handler)
   }, [])
 
-  // Fetch invitations
   useEffect(() => {
     if (!user) return
     axios.get('/api/invitations')
-      .then(r => setInvitations(r.data))
-      .catch(() => toast.error('Gagal memuat undangan'))
+      .then(async r => {
+        const invs: Invitation[] = r.data
+        setInvitations(invs)
+
+        const feeds: ActivityItem[] = []
+        let rsvpCount = 0
+        let wishCount = 0
+
+        await Promise.allSettled(invs.slice(0, 5).map(async inv => {
+          const name = `${inv.bride_name} & ${inv.groom_name}`
+          const [rv, wv] = await Promise.allSettled([
+            axios.get(`/api/rsvp/${inv.id}`),
+            axios.get(`/api/wishes/all/${inv.id}`),
+          ])
+          if (rv.status === 'fulfilled') {
+            rsvpCount += rv.value.data.length
+            rv.value.data.slice(0, 3).forEach((r: any) => feeds.push({
+              type: 'rsvp',
+              guest_name: r.guest_name,
+              attendance: r.attendance,
+              message: r.message,
+              created_at: r.created_at,
+              invitation_name: name,
+              invitation_id: inv.id,
+            }))
+          }
+          if (wv.status === 'fulfilled') {
+            wishCount += wv.value.data.length
+            wv.value.data.slice(0, 3).forEach((w: any) => feeds.push({
+              type: 'wish',
+              guest_name: w.guest_name,
+              message: w.message,
+              created_at: w.created_at,
+              invitation_name: name,
+              invitation_id: inv.id,
+            }))
+          }
+        }))
+
+        setTotalRsvp(rsvpCount)
+        setTotalWishes(wishCount)
+        feeds.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        setActivity(feeds.slice(0, 12))
+      })
       .finally(() => setFetching(false))
   }, [user])
 
   if (loading || !user) return null
 
-  const t = themeTokens[theme]
-  const firstName = user.name.split(' ')[0]
-  const published = invitations.filter(i => i.is_published)
-  const totalRsvp = invitations.reduce((sum, i) => sum + (i.rsvp_count || 0), 0)
-  const totalWishes = invitations.reduce((sum, i) => sum + (i.wishes_count || 0), 0)
-  const recent = [...invitations].slice(0, 3)
+  const theme_tokens = tk[theme]
+  const planKey = (user as any).plan || 'free'
+  const plan = PLAN_LIMITS[planKey] || PLAN_LIMITS.free
+  const totalPublished = invitations.filter(i => i.is_published).length
+  const upcoming = invitations
+    .filter(i => daysUntil(i.wedding_date) >= 0)
+    .sort((a, b) => daysUntil(a.wedding_date) - daysUntil(b.wedding_date))
+    .slice(0, 3)
 
-  const today = new Date().toLocaleDateString('id-ID', {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-  })
-
-  const statCards = [
-    { label: 'Total Undangan', value: invitations.length, icon: Icons.undangan },
-    { label: 'Total RSVP',     value: totalRsvp,          icon: Icons.rsvp },
-    { label: 'Total Ucapan',   value: totalWishes,        icon: Icons.wishes },
-    { label: 'Dipublikasi',    value: published.length,   icon: Icons.published },
-  ]
+  const tips = TIPS.map(tip => ({ ...tip, done: tip.checkFn(invitations) }))
+  const tipsCompleted = tips.filter(t => t.done).length
+  const today = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+  const usagePct = Math.min(100, (invitations.length / plan.invitations) * 100)
 
   return (
-    <div className={`flex min-h-screen ${t.page} transition-colors duration-300`}>
-      <Toaster position="top-right" />
+    <div className={`flex min-h-screen ${theme_tokens.page} transition-colors duration-300`}>
       <DashboardSidebar />
 
-      <main className={`flex-1 p-6 lg:p-10 ${t.main} min-w-0`}>
+      <main className="flex-1 min-w-0 overflow-auto">
 
-        {/* Header */}
-        <div className="flex items-start justify-between mb-8 gap-4">
-          <div>
-            <h1 className={`font-playfair text-2xl lg:text-3xl font-semibold ${t.heading}`}>
-              Selamat datang, {firstName} 👋
-            </h1>
-            <p className={`font-cinzel text-xs tracking-widest mt-1.5 ${t.muted}`}>
-              {today}
-            </p>
-          </div>
-          <Link
-            href="/dashboard/invitations/new"
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-cinzel text-xs tracking-wider uppercase transition-all duration-200 flex-shrink-0 ${t.btnPrimary}`}
-          >
-            {Icons.plus}
-            <span className="hidden sm:inline">Buat Undangan</span>
-          </Link>
-        </div>
-
-        {/* Stats row */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-          {statCards.map((s, i) => (
-            <div
-              key={i}
-              className={`rounded-xl p-5 flex flex-col gap-3 transition-all duration-200 ${t.card} ${t.cardHover}`}
-            >
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${t.iconBg} ${t.iconColor}`}>
-                {s.icon}
-              </div>
-              <div>
-                <p className={`font-playfair text-2xl font-semibold ${t.statNum}`}>
-                  {fetching ? '—' : s.value}
-                </p>
-                <p className={`font-lato text-xs mt-0.5 ${t.muted}`}>{s.label}</p>
-              </div>
+        {/* ── Hero welcome bar ── */}
+        <div className={`${theme_tokens.heroBg} px-6 lg:px-10 py-8`}>
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <p className="font-cinzel text-xs tracking-[0.25em] uppercase text-[#C8A96E] mb-1">{today}</p>
+              <h1 className="font-cormorant text-2xl lg:text-3xl italic font-semibold text-[#FAF7F2]">
+                {getGreeting()}, {(user as any).name?.split(' ')[0] || 'Pengguna'} 👋
+              </h1>
+              <p className="font-lato text-sm text-[#E8DCC8]/70 mt-1">
+                Pantau semua aktivitas undangan digital Anda dari sini.
+              </p>
             </div>
-          ))}
-        </div>
-
-        {/* Undangan Terbaru */}
-        <div>
-          <div className={`flex items-center justify-between mb-5 pb-3 border-b ${t.divider}`}>
-            <h2 className={`font-playfair text-lg font-semibold ${t.heading}`}>
-              Undangan Terbaru
-            </h2>
             <Link
-              href="/dashboard/invitations"
-              className={`font-cinzel text-xs tracking-wider uppercase transition-opacity hover:opacity-80 ${t.subtext}`}
+              href="/dashboard/invitations/new"
+              className="flex items-center gap-2 px-5 py-3 rounded-xl font-cinzel text-xs tracking-wider uppercase bg-[#C8A96E] hover:bg-[#E8DCC8] text-[#2C1A0E] transition-all duration-200 flex-shrink-0"
             >
-              Lihat Semua →
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              Buat Undangan
             </Link>
           </div>
+        </div>
 
-          {fetching ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map(i => (
-                <div key={i} className={`h-24 rounded-xl animate-pulse ${t.card}`} />
-              ))}
-            </div>
-          ) : invitations.length === 0 ? (
-            /* Empty state */
-            <div className={`rounded-xl p-12 flex flex-col items-center text-center ${t.emptyBg}`}>
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${t.iconBg} ${t.iconColor}`}>
-                {Icons.undangan}
+        <div className="p-6 lg:p-10 space-y-8">
+
+          {/* ── Stats row ── */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { label: 'Total Undangan',  value: invitations.length, icon: '✉️', color: '#6B3F2A', link: '/dashboard/invitations' },
+              { label: 'Dipublikasikan',  value: totalPublished,      icon: '🌐', color: '#15803d', link: '/dashboard/invitations' },
+              { label: 'Total RSVP',      value: totalRsvp,           icon: '👥', color: '#C8A96E', link: '' },
+              { label: 'Ucapan Masuk',    value: totalWishes,         icon: '💬', color: '#8B1A1A', link: '' },
+            ].map((s, i) => (
+              <div key={i} className={`rounded-xl p-5 ${theme_tokens.card}`}>
+                <div className="flex items-start justify-between mb-3">
+                  <span className="text-2xl">{s.icon}</span>
+                  {s.link && (
+                    <Link href={s.link} className={`font-cinzel text-[10px] tracking-wider uppercase ${theme_tokens.muted} hover:opacity-100 transition-opacity`}>
+                      Lihat →
+                    </Link>
+                  )}
+                </div>
+                <p className="font-playfair text-3xl font-semibold" style={{ color: s.color }}>
+                  {fetching ? '—' : s.value}
+                </p>
+                <p className={`font-lato text-xs mt-1 ${theme_tokens.muted}`}>{s.label}</p>
               </div>
-              <h3 className={`font-playfair text-lg font-semibold mb-2 ${t.heading}`}>
-                Belum ada undangan
-              </h3>
-              <p className={`font-lato text-sm mb-6 max-w-xs ${t.muted}`}>
-                Buat undangan digital pertama Anda dan bagikan momen spesial bersama orang tersayang.
+            ))}
+          </div>
+
+          {/* ── Main 2-col grid ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            {/* Activity feed — 2/3 */}
+            <div className={`lg:col-span-2 rounded-xl overflow-hidden ${theme_tokens.card}`}>
+              <div className={`px-5 py-4 border-b ${theme_tokens.divider} flex items-center justify-between`}>
+                <h2 className={`font-playfair text-base font-semibold ${theme_tokens.heading}`}>Aktivitas Terbaru</h2>
+                <span className={`font-cinzel text-[10px] tracking-wider uppercase ${theme_tokens.muted}`}>Semua undangan</span>
+              </div>
+
+              {fetching ? (
+                <div className="p-10 text-center">
+                  <p className={`font-lato text-sm ${theme_tokens.muted}`}>Memuat aktivitas...</p>
+                </div>
+              ) : activity.length === 0 ? (
+                <div className="p-12 text-center">
+                  <p className="text-3xl mb-3">🌸</p>
+                  <p className={`font-playfair text-base font-semibold mb-1 ${theme_tokens.heading}`}>Belum ada aktivitas</p>
+                  <p className={`font-lato text-xs ${theme_tokens.muted}`}>RSVP dan ucapan tamu akan muncul di sini setelah undangan dibagikan.</p>
+                </div>
+              ) : (
+                <div className={`divide-y ${theme_tokens.divideBg}`}>
+                  {activity.map((a, i) => (
+                    <div key={i} className={`px-5 py-3.5 flex items-start gap-3 transition-colors ${theme_tokens.rowHover}`}>
+                      <span className={`mt-0.5 px-2 py-0.5 rounded-full font-cinzel text-[10px] tracking-wider flex-shrink-0 ${
+                        a.type === 'rsvp' ? theme_tokens.actRsvp : theme_tokens.actWish
+                      }`}>
+                        {a.type === 'rsvp' ? 'RSVP' : 'Ucapan'}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className={`font-lato text-sm font-medium ${theme_tokens.heading}`}>
+                          {a.guest_name}
+                          {a.type === 'rsvp' && (
+                            <span className={`ml-2 font-normal text-xs ${a.attendance === 'hadir' ? 'text-emerald-500' : 'text-red-400'}`}>
+                              — {a.attendance === 'hadir' ? 'Hadir' : 'Tidak Hadir'}
+                            </span>
+                          )}
+                        </p>
+                        {a.message && (
+                          <p className={`font-lato text-xs truncate mt-0.5 ${theme_tokens.muted}`}>"{a.message}"</p>
+                        )}
+                        <p className={`font-lato text-xs mt-0.5 ${theme_tokens.muted}`}>
+                          {a.invitation_name} · {new Date(a.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                      <Link
+                        href={`/dashboard/invitations/${a.invitation_id}/${a.type === 'rsvp' ? 'rsvp' : 'wishes'}`}
+                        className={`flex-shrink-0 font-cinzel text-[10px] tracking-wider uppercase ${theme_tokens.muted} hover:opacity-100 transition-opacity`}
+                      >
+                        Detail →
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Right column — 1/3 */}
+            <div className="space-y-5">
+
+              {/* Plan info */}
+              <div className={`rounded-xl p-5 ${theme_tokens.card}`}>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className={`font-playfair text-base font-semibold ${theme_tokens.heading}`}>Paket Saya</h2>
+                  <span
+                    className="px-2.5 py-1 rounded-full font-cinzel text-[10px] tracking-wider"
+                    style={{ background: plan.color + '22', color: plan.color }}
+                  >
+                    {plan.label}
+                  </span>
+                </div>
+
+                <div className="mb-1.5 flex justify-between">
+                  <p className={`font-lato text-xs ${theme_tokens.muted}`}>Undangan digunakan</p>
+                  <p className={`font-lato text-xs font-medium ${theme_tokens.sub}`}>{invitations.length} / {plan.invitations}</p>
+                </div>
+                <div className={`h-2 rounded-full mb-4 ${theme_tokens.progress}`}>
+                  <div className={`h-2 rounded-full transition-all duration-700 ${theme_tokens.progressFill}`} style={{ width: `${usagePct}%` }} />
+                </div>
+
+                <div className={`space-y-1.5 font-lato text-xs mb-5 ${theme_tokens.muted}`}>
+                  <p>✓ {plan.invitations} undangan maksimal</p>
+                  <p>✓ Template tidak terbatas</p>
+                  <p>✓ RSVP dan ucapan tidak terbatas</p>
+                  {planKey === 'free' && <p className="text-amber-500">✗ Custom domain</p>}
+                  {planKey === 'free' && <p className="text-amber-500">✗ Musik latar</p>}
+                  {planKey === 'free' && <p className="text-amber-500">✗ Analitik lanjutan</p>}
+                </div>
+
+                {plan.next && (
+                  <button className={`w-full py-2.5 rounded-lg font-cinzel text-xs tracking-wider uppercase transition-all duration-200 ${theme_tokens.btnPrimary}`}>
+                    Upgrade ke {plan.next} ✦
+                  </button>
+                )}
+              </div>
+
+              {/* Getting started */}
+              <div className={`rounded-xl p-5 ${theme_tokens.card}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className={`font-playfair text-base font-semibold ${theme_tokens.heading}`}>Mulai dari Sini</h2>
+                  <span className={`font-cinzel text-[10px] tracking-wider uppercase ${theme_tokens.muted}`}>{tipsCompleted}/{tips.length}</span>
+                </div>
+                <div className={`h-1.5 rounded-full mb-4 ${theme_tokens.progress}`}>
+                  <div className={`h-1.5 rounded-full transition-all duration-700 ${theme_tokens.progressFill}`} style={{ width: `${(tipsCompleted / tips.length) * 100}%` }} />
+                </div>
+                <div className="space-y-2.5">
+                  {tips.map((tip, i) => (
+                    <div key={i} className="flex items-center gap-2.5">
+                      <div className={`w-4 h-4 rounded-full flex-shrink-0 flex items-center justify-center border transition-colors ${
+                        tip.done ? 'bg-emerald-500 border-emerald-500' : theme_tokens.divider
+                      }`}>
+                        {tip.done && (
+                          <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
+                            <polyline points="2 6 5 9 10 3"/>
+                          </svg>
+                        )}
+                      </div>
+                      {tip.link ? (
+                        <Link href={tip.link} className={`font-lato text-xs transition-colors ${tip.done ? theme_tokens.tipDone + ' line-through opacity-60' : theme_tokens.sub} hover:opacity-80`}>
+                          {tip.text}
+                        </Link>
+                      ) : (
+                        <p className={`font-lato text-xs ${tip.done ? theme_tokens.tipDone + ' line-through opacity-60' : theme_tokens.muted}`}>{tip.text}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Upcoming countdowns ── */}
+          {upcoming.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className={`font-playfair text-lg font-semibold ${theme_tokens.heading}`}>Hari Pernikahan Mendekat</h2>
+                <Link href="/dashboard/invitations" className={`font-cinzel text-xs tracking-wider uppercase ${theme_tokens.muted} hover:opacity-100 transition-opacity`}>
+                  Semua →
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {upcoming.map(inv => {
+                  const days = daysUntil(inv.wedding_date)
+                  return (
+                    <div key={inv.id} className={`rounded-xl p-5 relative overflow-hidden ${theme_tokens.countdownBg}`}>
+                      <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full border border-[#C8A96E]/20 pointer-events-none" />
+                      <div className="absolute -right-2 -top-2 w-12 h-12 rounded-full border border-[#C8A96E]/10 pointer-events-none" />
+                      <p className="font-cinzel text-[10px] tracking-[0.2em] uppercase text-[#C8A96E]/70 mb-2">
+                        {inv.is_published ? '🌐 Aktif' : '📝 Draft'}
+                      </p>
+                      <h3 className="font-cormorant text-lg italic font-semibold text-[#FAF7F2] leading-tight">{inv.bride_name}</h3>
+                      <p className="font-cormorant text-sm text-[#C8A96E] italic mb-3">& {inv.groom_name}</p>
+                      <div className="flex items-end justify-between">
+                        <div>
+                          <p className="font-playfair text-4xl font-bold text-[#FAF7F2]">{days === 0 ? '🎉' : days}</p>
+                          <p className="font-lato text-xs text-[#E8DCC8]/60">{days === 0 ? 'Hari ini!' : 'hari lagi'}</p>
+                        </div>
+                        <Link
+                          href={`/dashboard/invitations/${inv.id}/rsvp`}
+                          className="font-cinzel text-[10px] tracking-wider uppercase px-3 py-2 rounded-lg bg-[#C8A96E]/20 hover:bg-[#C8A96E]/30 text-[#C8A96E] transition-all"
+                        >
+                          RSVP →
+                        </Link>
+                      </div>
+                      <p className="font-lato text-xs mt-2 text-[#E8DCC8]/50">
+                        {new Date(inv.wedding_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      </p>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ── Empty state ── */}
+          {!fetching && invitations.length === 0 && (
+            <div className={`rounded-xl p-12 text-center border-2 border-dashed ${theme_tokens.divider}`}>
+              <p className="text-4xl mb-4">💌</p>
+              <h3 className={`font-playfair text-xl font-semibold mb-2 ${theme_tokens.heading}`}>Mulai perjalanan Anda</h3>
+              <p className={`font-lato text-sm mb-6 max-w-sm mx-auto ${theme_tokens.muted}`}>
+                Buat undangan digital pertama dan bagikan momen spesial Anda kepada orang-orang tercinta.
               </p>
               <Link
                 href="/dashboard/invitations/new"
-                className={`flex items-center gap-2 px-5 py-3 rounded-lg font-cinzel text-xs tracking-wider uppercase transition-all duration-200 ${t.btnPrimary}`}
+                className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-cinzel text-xs tracking-wider uppercase transition-all ${theme_tokens.btnPrimary}`}
               >
-                {Icons.plus}
-                Buat Undangan Pertama
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Buat Undangan Sekarang
               </Link>
             </div>
-          ) : (
-            <div className="space-y-3">
-              {recent.map(inv => (
-                <div
-                  key={inv.id}
-                  className={`rounded-xl p-5 flex items-center gap-4 transition-all duration-200 ${t.card} ${t.cardHover}`}
-                >
-                  {/* Avatar */}
-                  <div
-                    className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 font-greatVibes text-lg"
-                    style={{ background: '#6B3F2A', color: '#E8DCC8' }}
-                  >
-                    {inv.bride_name?.[0] || '?'}
-                  </div>
-
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <p className={`font-playfair text-base font-medium truncate ${t.heading}`}>
-                      {inv.bride_name} & {inv.groom_name}
-                    </p>
-                    <div className={`flex items-center gap-1.5 mt-1 font-lato text-xs ${t.muted}`}>
-                      {Icons.calendar}
-                      <span>
-                        {new Date(inv.wedding_date).toLocaleDateString('id-ID', {
-                          day: 'numeric', month: 'long', year: 'numeric'
-                        })}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Status badge */}
-                  <span className={`px-2.5 py-1 rounded-full font-cinzel text-[10px] tracking-wider flex-shrink-0 ${
-                    inv.is_published ? t.badge.published : t.badge.draft
-                  }`}>
-                    {inv.is_published ? 'Aktif' : 'Draft'}
-                  </span>
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <Link
-                      href={`/dashboard/invitations/${inv.id}/edit`}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-lato text-xs transition-all duration-200 ${t.btnOutline}`}
-                    >
-                      {Icons.edit} Edit
-                    </Link>
-                    <Link
-                      href={`/${inv.slug}`}
-                      target="_blank"
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-lato text-xs transition-all duration-200 ${t.btnPrimary}`}
-                    >
-                      {Icons.eye} Lihat
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </div>
           )}
+
         </div>
       </main>
     </div>
