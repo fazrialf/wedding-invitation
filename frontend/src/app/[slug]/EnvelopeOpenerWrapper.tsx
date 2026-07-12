@@ -60,10 +60,16 @@ export default function EnvelopeOpenerWrapper({ invitation, theme, guestName }: 
     : undefined
 
   // Gift registry data
+  // Remap gift_accounts {bank, number, name} → GiftRegistry format {bankName, accountNumber, accountName}
   const gifts = invitation.gift_accounts
     ? (typeof invitation.gift_accounts === 'string'
         ? JSON.parse(invitation.gift_accounts)
-        : invitation.gift_accounts)
+        : invitation.gift_accounts
+      ).map((g: any) => ({
+        bankName:      g.bankName      || g.bank   || '',
+        accountNumber: g.accountNumber || g.number || '',
+        accountName:   g.accountName   || g.name   || '',
+      }))
     : undefined
 
   const isFairytale = theme.slug.startsWith('fai-')

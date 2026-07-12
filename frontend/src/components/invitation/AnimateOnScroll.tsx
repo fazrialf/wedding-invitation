@@ -14,6 +14,11 @@ type AnimationType =
   | 'zoom-in'
   | 'zoom-out'
   | 'flip'
+  | 'clip-reveal-up'
+  | 'clip-reveal-down'
+  | 'clip-reveal-left'
+  | 'clip-reveal-right'
+  | 'clip-reveal-iris'
   | 'none'
 
 interface AnimateOnScrollProps {
@@ -52,6 +57,12 @@ function getInitialState(animation: AnimationType): React.CSSProperties {
       return { opacity: 0, transform: 'scale(1.15)' }
     case 'flip':
       return { opacity: 0, transform: 'perspective(600px) rotateX(25deg)' }
+    case 'clip-reveal-up':
+    case 'clip-reveal-down':
+    case 'clip-reveal-left':
+    case 'clip-reveal-right':
+    case 'clip-reveal-iris':
+      return {} // handled via CSS class
     case 'none':
     default:
       return {}
@@ -70,6 +81,12 @@ function getVisibleState(animation: AnimationType): React.CSSProperties {
       return { opacity: 1, transform: 'scale(1)' }
     case 'flip':
       return { opacity: 1, transform: 'perspective(600px) rotateX(0deg)' }
+    case 'clip-reveal-up':
+    case 'clip-reveal-down':
+    case 'clip-reveal-left':
+    case 'clip-reveal-right':
+    case 'clip-reveal-iris':
+      return {} // handled via CSS class
     case 'none':
     default:
       return {}
@@ -104,7 +121,9 @@ const AnimateOnScroll: React.FC<AnimateOnScrollProps> = ({
 
   const isVisible = once ? hasAnimated : inView
 
-  const transitionStyle: React.CSSProperties = {
+  const isClipReveal = animation.startsWith('clip-reveal')
+
+  const transitionStyle: React.CSSProperties = isClipReveal ? {} : {
     transition: `opacity ${duration}ms cubic-bezier(0.22, 1, 0.36, 1) ${delay}ms, transform ${duration}ms cubic-bezier(0.22, 1, 0.36, 1) ${delay}ms`,
     willChange: 'opacity, transform',
   }
@@ -115,12 +134,14 @@ const AnimateOnScroll: React.FC<AnimateOnScrollProps> = ({
     ...style,
   }
 
+  const clipClass = isClipReveal && isVisible ? animation : ''
+
   // Use a dynamic element
   return React.createElement(
     Tag as string,
     {
       ref,
-      className,
+      className: `${className} ${clipClass}`.trim(),
       style: currentStyle,
     },
     children
