@@ -19,6 +19,7 @@ import {
 type Tab = 'detail' | 'acara' | 'konten' | 'desain' | 'bagikan'
 type TimelineItem = { time: string; title: string }
 type BankAccount = { bank: string; number: string; name: string }
+type LoveStoryItem = { date: string; title: string; description: string }
 
 const TABS: { key: Tab; label: string }[] = [
   { key: 'detail',   label: 'Detail' },
@@ -92,11 +93,18 @@ export default function EditInvitationPage() {
   const [inv, setInv] = useState<any>(null)
   const [saving, setSaving] = useState(false)
   const [publishing, setPublishing] = useState(false)
-  const [uploading, setUploading] = useState<'photo'|'music'|null>(null)
+  const [uploading, setUploading] = useState<'photo'|'music'|'gallery'|null>(null)
   const [activeTab, setActiveTab] = useState<Tab>('detail')
   const [catFilter, setCatFilter] = useState('all')
   const [themeMode, setThemeMode] = useState<'light'|'dark'>('light')
   const [copied, setCopied] = useState(false)
+
+  // Gallery state
+  const [galleryPhotos, setGalleryPhotos] = useState<string[]>([])
+
+  // Love story state
+  const [showLoveStory, setShowLoveStory] = useState(false)
+  const [loveStory, setLoveStory] = useState<LoveStoryItem[]>([{ date: '', title: '', description: '' }])
 
   // Konten state
   const [showTimeline, setShowTimeline] = useState(false)
@@ -124,6 +132,14 @@ export default function EditInvitationPage() {
       setInv(r.data)
       if (r.data.timeline) { setShowTimeline(true); setTimeline(r.data.timeline) }
       if (r.data.gift_accounts?.length) { setShowBank(true); setBankAccounts(r.data.gift_accounts) }
+      if (r.data.gallery_photos) {
+        const g = typeof r.data.gallery_photos === 'string' ? JSON.parse(r.data.gallery_photos) : r.data.gallery_photos
+        if (Array.isArray(g) && g.length) setGalleryPhotos(g)
+      }
+      if (r.data.love_story) {
+        const ls = typeof r.data.love_story === 'string' ? JSON.parse(r.data.love_story) : r.data.love_story
+        if (Array.isArray(ls) && ls.length) { setShowLoveStory(true); setLoveStory(ls) }
+      }
     }).catch(() => toast.error('Gagal memuat undangan'))
   }, [user, id])
 
@@ -138,6 +154,8 @@ export default function EditInvitationPage() {
         ...inv,
         timeline: showTimeline ? timeline.filter(t => t.title) : null,
         gift_accounts: showBank ? bankAccounts.filter(b => b.bank) : null,
+        gallery_photos: galleryPhotos.length ? galleryPhotos : null,
+        love_story: showLoveStory ? loveStory.filter(s => s.title) : null,
       }, { headers: { Authorization: `Bearer ${token}` } })
       toast.success('Berhasil disimpan!')
     } catch { toast.error('Gagal menyimpan') }
@@ -160,17 +178,43 @@ export default function EditInvitationPage() {
 
   const handleUpload = async (file: File, type: 'photo'|'music') => {
     setUploading(type)
-    const fd = new FormData()
-    fd.append('file', file)
     try {
       const token = localStorage.getItem('token')
-      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/uploads/${type}`, fd,
-        { headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${token}` } })
+      const fd = new FormData(); fd.append('file', file)
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/uploads/photo`, fd,
+        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' } })
       set(type === 'photo' ? 'cover_photo_url' : 'music_url', res.data.url)
       toast.success(type === 'photo' ? 'Foto berhasil diunggah!' : 'Musik berhasil diunggah!')
     } catch { toast.error('Gagal mengunggah') }
     finally { setUploading(null) }
   }
+
+  const handleGalleryUpload = async (files: FileList) => {
+    setUploading('gallery')
+    try {
+      const token = localStorage.getItem('token')
+      const urls: string[] = []
+      for (const file of Array.from(files)) {
+        const fd = new FormData(); fd.append('file', file)
+        const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/uploads/photo`, fd,
+          { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' } })
+        urls.push(res.data.url)
+      }
+      setGalleryPhotos(prev => [...prev, ...urls])
+      toast.success(`${urls.length} foto berhasil diunggah!`)
+    } catch { toast.error('Gagal mengunggah galeri') }
+    finally { setUploading(null) }
+  }
+
+  const removeGalleryPhoto = (idx: number) =>
+    setGalleryPhotos(prev => prev.filter((_, i) => i !== idx))
+
+  const updateLoveStory = (idx: number, k: keyof LoveStoryItem, v: string) =>
+    setLoveStory(prev => prev.map((s, i) => i === idx ? { ...s, [k]: v } : s))
+  const addLoveStory = () =>
+    setLoveStory(prev => [...prev, { date: '', title: '', description: '' }])
+  const removeLoveStory = (idx: number) =>
+    setLoveStory(prev => prev.filter((_, i) => i !== idx))
 
   const addTimeline = () => { if (timeline.length < 10) setTimeline(t => [...t, { time: '', title: '' }]) }
   const removeTimeline = (i: number) => setTimeline(t => t.filter((_, idx) => idx !== i))
@@ -461,6 +505,85 @@ export default function EditInvitationPage() {
                     </label>
                   </div>
                 </div>
+              </div>
+
+              {/* Gallery Photos */}
+              <div className={`rounded-2xl p-5 ${tk.card}`}>
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className={`font-playfair text-sm font-semibold ${tk.heading}`}>Galeri Foto</p>
+                    <p className={`text-[11px] ${tk.muted}`}>Foto-foto yang ditampilkan di undangan (maks. 12)</p>
+                  </div>
+                  <label className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs cursor-pointer transition-all ${uploading==='gallery' ? tk.btnGhost : tk.btnOutline}`}>
+                    <IconPhoto size={13}/>
+                    {uploading==='gallery' ? 'Mengunggah...' : 'Tambah Foto'}
+                    <input type="file" accept="image/*" multiple className="hidden"
+                      onChange={e => { if(e.target.files?.length) handleGalleryUpload(e.target.files) }}
+                      disabled={uploading==='gallery' || galleryPhotos.length >= 12}/>
+                  </label>
+                </div>
+                {galleryPhotos.length === 0 ? (
+                  <p className={`text-xs text-center py-6 ${tk.muted}`}>Belum ada foto. Klik "Tambah Foto" untuk mengunggah.</p>
+                ) : (
+                  <div className="grid grid-cols-3 gap-2">
+                    {galleryPhotos.map((url, i) => (
+                      <div key={i} className="relative group rounded-xl overflow-hidden aspect-square">
+                        <img src={url} alt={`gallery-${i}`} className="w-full h-full object-cover"/>
+                        <button
+                          onClick={() => removeGalleryPhoto(i)}
+                          className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          aria-label="Hapus foto">
+                          <IconTrash size={11}/>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Love Story */}
+              <div className={`rounded-2xl p-5 ${tk.card}`}>
+                <div className="flex items-center justify-between mb-1">
+                  <div>
+                    <p className={`font-playfair text-sm font-semibold ${tk.heading}`}>Kisah Cinta</p>
+                    <p className={`text-[11px] ${tk.muted}`}>Momen-momen perjalanan cinta yang ditampilkan di undangan</p>
+                  </div>
+                  <button onClick={() => setShowLoveStory(v => !v)}
+                    className={`relative w-11 h-6 rounded-full transition-colors ${showLoveStory ? tk.toggleOn : tk.toggleOff}`}>
+                    <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${showLoveStory ? 'left-5' : 'left-0.5'}`}/>
+                  </button>
+                </div>
+                <AnimatePresence>
+                  {showLoveStory && (
+                    <motion.div initial={{height:0,opacity:0}} animate={{height:'auto',opacity:1}} exit={{height:0,opacity:0}} className="overflow-hidden">
+                      <div className="mt-3 space-y-3">
+                        {loveStory.map((item, i) => (
+                          <div key={i} className={`rounded-xl p-3 border ${tk.card} space-y-2`}>
+                            <div className="flex gap-2 items-start">
+                              <div className="flex-1 space-y-2">
+                                <input value={item.date} onChange={e=>updateLoveStory(i,'date',e.target.value)}
+                                  placeholder="Contoh: Maret 2020" className={`w-full px-2 py-1.5 rounded-lg text-xs ${tk.input}`}/>
+                                <input value={item.title} onChange={e=>updateLoveStory(i,'title',e.target.value)}
+                                  placeholder="Judul momen" className={`w-full px-2 py-1.5 rounded-lg text-xs ${tk.input}`}/>
+                                <textarea value={item.description} onChange={e=>updateLoveStory(i,'description',e.target.value)}
+                                  placeholder="Ceritakan momen ini..." rows={2}
+                                  className={`w-full px-2 py-1.5 rounded-lg text-xs resize-none ${tk.input}`}/>
+                              </div>
+                              <button onClick={()=>removeLoveStory(i)} className={`p-1.5 rounded-lg mt-0.5 shrink-0 ${tk.btnDanger}`}>
+                                <IconTrash size={14}/>
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                        {loveStory.length < 10 && (
+                          <button onClick={addLoveStory} className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg ${tk.btnGhost}`}>
+                            <IconPlus size={13}/>Tambah Momen
+                          </button>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </motion.div>
           )}

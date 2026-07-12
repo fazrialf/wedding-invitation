@@ -93,6 +93,7 @@ export default function EnvelopeOpenerWrapper({ invitation, theme, guestName }: 
           brideName={invitation.bride_name}
           groomName={invitation.groom_name}
           weddingDate={invitation.wedding_date}
+          coverPhotoUrl={invitation.cover_photo_url}
           theme={theme}
           guestName={guestName}
         />
