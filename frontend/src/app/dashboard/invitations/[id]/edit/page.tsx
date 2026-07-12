@@ -6,17 +6,82 @@ import { useRouter, useParams } from 'next/navigation'
 import DashboardSidebar from '@/components/studio/DashboardSidebar'
 import axios from 'axios'
 import toast, { Toaster } from 'react-hot-toast'
-import { themes, getTemplatesByCategory } from '@/themes/config'
-import { templatePalettes, getTemplatePalettes } from '@/themes/palettes'
+import { themes, getAllTemplates } from '@/themes/config'
+import { templatePalettes } from '@/themes/palettes'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  IconDeviceFloppy, IconEye, IconSend, IconBan,
+  IconPhoto, IconMusic, IconPlus, IconTrash, IconPhone,
+  IconMapPin, IconCalendar, IconClock, IconCopy, IconCheck,
+  IconBrandWhatsapp, IconCreditCard,
+} from '@tabler/icons-react'
 
-const CATEGORIES = [
-  { key: 'classic',     label: 'Classic' },
-  { key: 'minimalist',  label: 'Minimalist' },
-  { key: 'floral',      label: 'Floral' },
-  { key: 'nature',      label: 'Nature' },
-  { key: 'fairytale',   label: 'Fairytale' },
-  { key: 'adat',        label: 'Adat / Traditional' },
+type Tab = 'detail' | 'acara' | 'konten' | 'desain' | 'bagikan'
+type TimelineItem = { time: string; title: string }
+type BankAccount = { bank: string; number: string; name: string }
+
+const TABS: { key: Tab; label: string }[] = [
+  { key: 'detail',   label: 'Detail' },
+  { key: 'acara',    label: 'Acara' },
+  { key: 'konten',   label: 'Konten' },
+  { key: 'desain',   label: 'Desain' },
+  { key: 'bagikan',  label: 'Bagikan' },
 ]
+const CATEGORIES = [
+  { slug: 'all', label: 'Semua' },
+  { slug: 'minimalist', label: 'Minimalis' },
+  { slug: 'floral', label: 'Floral' },
+  { slug: 'nature', label: 'Alam' },
+  { slug: 'fairytale', label: 'Dongeng' },
+  { slug: 'adat', label: 'Adat' },
+]
+
+function getTheme() {
+  if (typeof window === 'undefined') return 'light'
+  return localStorage.getItem('pelaminan-theme') || 'light'
+}
+
+const TK = {
+  light: {
+    page: 'bg-[#FAF7F2]', card: 'bg-white border border-[#E8DCC8]',
+    heading: 'text-[#2C1A0E]', sub: 'text-[#6B3F2A]', muted: 'text-[#6B3F2A]/60',
+    input: 'bg-white border border-[#E8DCC8] text-[#2C1A0E] focus:border-[#C8A96E] focus:outline-none placeholder:text-[#6B3F2A]/30',
+    label: 'font-cinzel text-[10px] tracking-widest uppercase text-[#6B3F2A]',
+    btnPrimary: 'bg-[#6B3F2A] hover:bg-[#2C1A0E] text-[#FAF7F2]',
+    btnOutline: 'border border-[#C8A96E] text-[#6B3F2A] hover:bg-[#E8DCC8]',
+    btnGhost: 'text-[#6B3F2A]/60 hover:text-[#6B3F2A] hover:bg-[#E8DCC8]/50',
+    btnDanger: 'text-[#8B1A1A]/60 hover:text-[#8B1A1A] hover:bg-red-50',
+    btnGreen: 'bg-emerald-600 hover:bg-emerald-700 text-white',
+    btnRed: 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100',
+    tabActive: 'border-b-2 border-[#6B3F2A] text-[#2C1A0E]',
+    tabDefault: 'border-b-2 border-transparent text-[#6B3F2A]/50 hover:text-[#6B3F2A]',
+    divider: 'border-[#E8DCC8]', toggleOn: 'bg-[#6B3F2A]', toggleOff: 'bg-[#E8DCC8]',
+    tplSelected: 'border-2 border-[#6B3F2A] shadow-md', tplDefault: 'border-2 border-[#E8DCC8] hover:border-[#C8A96E]',
+    catActive: 'bg-[#6B3F2A] text-white', catDefault: 'bg-white border border-[#E8DCC8] text-[#6B3F2A] hover:border-[#C8A96E]',
+    infoBox: 'bg-[#E8DCC8]/40 border border-[#C8A96E]/30 text-[#6B3F2A]/80',
+    badge: 'bg-emerald-100 text-emerald-700', badgeDraft: 'bg-[#E8DCC8] text-[#6B3F2A]',
+  },
+  dark: {
+    page: 'bg-[#1C0F07]', card: 'bg-[#3D2410] border border-[#4A2E18]',
+    heading: 'text-[#E8DCC8]', sub: 'text-[#C8A96E]', muted: 'text-[#C8A96E]/50',
+    input: 'bg-[#2C1A0E] border border-[#4A2E18] text-[#E8DCC8] focus:border-[#C8A96E] focus:outline-none placeholder:text-[#C8A96E]/30',
+    label: 'font-cinzel text-[10px] tracking-widest uppercase text-[#C8A96E]',
+    btnPrimary: 'bg-[#C8A96E] hover:bg-[#E8DCC8] text-[#2C1A0E]',
+    btnOutline: 'border border-[#C8A96E]/50 text-[#C8A96E] hover:bg-[#6B3F2A]/20',
+    btnGhost: 'text-[#C8A96E]/50 hover:text-[#C8A96E] hover:bg-[#4A2E18]',
+    btnDanger: 'text-red-400/60 hover:text-red-400 hover:bg-red-900/20',
+    btnGreen: 'bg-emerald-700 hover:bg-emerald-600 text-white',
+    btnRed: 'bg-red-900/30 text-red-400 border border-red-800 hover:bg-red-900/50',
+    tabActive: 'border-b-2 border-[#C8A96E] text-[#E8DCC8]',
+    tabDefault: 'border-b-2 border-transparent text-[#C8A96E]/40 hover:text-[#C8A96E]',
+    divider: 'border-[#4A2E18]', toggleOn: 'bg-[#C8A96E]', toggleOff: 'bg-[#4A2E18]',
+    tplSelected: 'border-2 border-[#C8A96E] shadow-md', tplDefault: 'border-2 border-[#4A2E18] hover:border-[#C8A96E]',
+    catActive: 'bg-[#C8A96E] text-[#2C1A0E]', catDefault: 'bg-[#3D2410] border border-[#4A2E18] text-[#C8A96E] hover:border-[#C8A96E]',
+    infoBox: 'bg-[#4A2E18]/40 border border-[#C8A96E]/20 text-[#C8A96E]/70',
+    badge: 'bg-emerald-900/40 text-emerald-400', badgeDraft: 'bg-[#4A2E18] text-[#C8A96E]',
+  },
+}
+
 
 export default function EditInvitationPage() {
   const { user, loading } = useAuth()
@@ -28,8 +93,23 @@ export default function EditInvitationPage() {
   const [saving, setSaving] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [uploading, setUploading] = useState<'photo'|'music'|null>(null)
-  const [activeTab, setActiveTab] = useState<'details'|'media'|'share'|'design'>('details')
-  const [activeCat, setActiveCat] = useState('classic')
+  const [activeTab, setActiveTab] = useState<Tab>('detail')
+  const [catFilter, setCatFilter] = useState('all')
+  const [themeMode, setThemeMode] = useState<'light'|'dark'>('light')
+  const [copied, setCopied] = useState(false)
+
+  // Konten state
+  const [showTimeline, setShowTimeline] = useState(false)
+  const [timeline, setTimeline] = useState<TimelineItem[]>([{ time: '', title: '' }])
+  const [showBank, setShowBank] = useState(false)
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([{ bank: '', number: '', name: '' }])
+
+  useEffect(() => {
+    setThemeMode(getTheme() as 'light'|'dark')
+    const handler = () => setThemeMode(getTheme() as 'light'|'dark')
+    window.addEventListener('pelaminan-theme-change', handler)
+    return () => window.removeEventListener('pelaminan-theme-change', handler)
+  }, [])
 
   useEffect(() => {
     if (!loading && !user) router.push('/login')
@@ -37,384 +117,430 @@ export default function EditInvitationPage() {
 
   useEffect(() => {
     if (!user || !id) return
-    axios.get(`/api/invitations/by-id/${id}`)
-      .then(r => setInv(r.data))
-      .catch(() => toast.error('Failed to load invitation'))
+    const token = localStorage.getItem('token')
+    axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/invitations/by-id/${id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    }).then(r => {
+      setInv(r.data)
+      if (r.data.timeline) { setShowTimeline(true); setTimeline(r.data.timeline) }
+      if (r.data.gift_accounts?.length) { setShowBank(true); setBankAccounts(r.data.gift_accounts) }
+    }).catch(() => toast.error('Gagal memuat undangan'))
   }, [user, id])
 
+  const tk = TK[themeMode]
   const set = (k: string, v: any) => setInv((f: any) => ({ ...f, [k]: v }))
 
   const handleSave = async () => {
     setSaving(true)
     try {
-      await axios.put(`/api/invitations/${id}`, inv)
-      toast.success('Saved successfully!')
-    } catch {
-      toast.error('Failed to save')
-    } finally {
-      setSaving(false)
-    }
+      const token = localStorage.getItem('token')
+      await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/api/invitations/${id}`, {
+        ...inv,
+        timeline: showTimeline ? timeline.filter(t => t.title) : null,
+        gift_accounts: showBank ? bankAccounts.filter(b => b.bank) : null,
+      }, { headers: { Authorization: `Bearer ${token}` } })
+      toast.success('Berhasil disimpan!')
+    } catch { toast.error('Gagal menyimpan') }
+    finally { setSaving(false) }
   }
 
   const handlePublish = async () => {
     setPublishing(true)
     try {
-      await axios.put(`/api/invitations/${id}`, {
-        is_published: !inv.is_published
-      })
+      const token = localStorage.getItem('token')
+      await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/api/invitations/${id}`,
+        { is_published: !inv.is_published },
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
       setInv((f: any) => ({ ...f, is_published: !f.is_published }))
-      toast.success(inv.is_published ? 'Unpublished' : 'Published! 🎉')
-    } catch {
-      toast.error('Failed to update status')
-    } finally {
-      setPublishing(false)
-    }
+      toast.success(inv.is_published ? 'Undangan disembunyikan' : 'Undangan dipublikasikan!')
+    } catch { toast.error('Gagal mengubah status') }
+    finally { setPublishing(false) }
   }
 
-  const handleUpload = async (file: File, type: 'photo' | 'music') => {
+  const handleUpload = async (file: File, type: 'photo'|'music') => {
     setUploading(type)
     const fd = new FormData()
     fd.append('file', file)
     try {
-      const res = await axios.post(
-        `/api/uploads/${type}`,
-        fd, { headers: { 'Content-Type': 'multipart/form-data' } }
-      )
-      const field = type === 'photo' ? 'cover_photo_url' : 'music_url'
-      set(field, res.data.url)
-      toast.success(`${type === 'photo' ? 'Photo' : 'Music'} uploaded!`)
-    } catch {
-      toast.error('Upload failed')
-    } finally {
-      setUploading(null)
-    }
+      const token = localStorage.getItem('token')
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/uploads/${type}`, fd,
+        { headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${token}` } })
+      set(type === 'photo' ? 'cover_photo_url' : 'music_url', res.data.url)
+      toast.success(type === 'photo' ? 'Foto berhasil diunggah!' : 'Musik berhasil diunggah!')
+    } catch { toast.error('Gagal mengunggah') }
+    finally { setUploading(null) }
   }
 
+  const addTimeline = () => { if (timeline.length < 10) setTimeline(t => [...t, { time: '', title: '' }]) }
+  const removeTimeline = (i: number) => setTimeline(t => t.filter((_, idx) => idx !== i))
+  const updateTimeline = (i: number, field: 'time'|'title', val: string) =>
+    setTimeline(t => t.map((item, idx) => idx === i ? { ...item, [field]: val } : item))
+
+  const addBank = () => { if (bankAccounts.length < 5) setBankAccounts(b => [...b, { bank: '', number: '', name: '' }]) }
+  const removeBank = (i: number) => setBankAccounts(b => b.filter((_, idx) => idx !== i))
+  const updateBank = (i: number, field: 'bank'|'number'|'name', val: string) =>
+    setBankAccounts(b => b.map((item, idx) => idx === i ? { ...item, [field]: val } : item))
+
+  const copyLink = () => {
+    const url = `${window.location.origin}/${inv?.slug}`
+    navigator.clipboard.writeText(url)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const allTemplates = getAllTemplates()
+  const filtered = catFilter === 'all' ? allTemplates : allTemplates.filter((t: any) => t.category === catFilter)
+
   if (loading || !user || !inv) return (
-    <div className="flex min-h-screen bg-stone-50">
+    <div className={`flex min-h-screen ${themeMode === 'dark' ? 'bg-[#1C0F07]' : 'bg-[#FAF7F2]'}`}>
       <DashboardSidebar />
-      <main className="flex-1 p-10 flex items-center justify-center">
-        <p className="font-lato text-stone-400">Loading...</p>
+      <main className="flex-1 flex items-center justify-center">
+        <p className="font-lato text-[#6B3F2A]/40 animate-pulse">Memuat undangan...</p>
       </main>
     </div>
   )
 
   const shareUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/${inv.slug}`
 
+
   return (
-    <div className="flex min-h-screen bg-stone-50">
+    <div className={`min-h-screen ${tk.page} transition-colors duration-300`}>
       <Toaster position="top-right" />
       <DashboardSidebar />
+      <div className="lg:pl-64 min-h-screen">
+        <div className="max-w-3xl mx-auto px-4 py-8">
 
-      <main className="flex-1 p-10">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <p className="font-cinzel text-xs tracking-widest text-stone-400 mb-1">EDITING INVITATION</p>
-            <h1 className="font-playfair text-3xl">{inv.bride_name} & {inv.groom_name}</h1>
-          </div>
-          <div className="flex gap-3">
-            <a href={`/${inv.slug}`} target="_blank"
-              className="border border-stone-300 text-stone-600 font-cinzel text-xs tracking-widest px-5 py-3 hover:bg-stone-100 transition-colors">
-              PREVIEW ↗
-            </a>
-            <button onClick={handleSave} disabled={saving}
-              className="border border-stone-800 text-stone-800 font-cinzel text-xs tracking-widest px-5 py-3 hover:bg-stone-100 disabled:opacity-50 transition-colors">
-              {saving ? 'SAVING...' : 'SAVE'}
-            </button>
-            <button onClick={handlePublish} disabled={publishing}
-              className={`font-cinzel text-xs tracking-widest px-5 py-3 transition-colors ${
-                inv.is_published
-                  ? 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100'
-                  : 'bg-green-600 hover:bg-green-700 text-white'
-              }`}>
-              {publishing ? '...' : inv.is_published ? 'UNPUBLISH' : 'PUBLISH'}
-            </button>
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex gap-1 mb-8 border-b border-stone-200">
-          {(['details', 'design', 'media', 'share'] as const).map(tab => (
-            <button key={tab} onClick={() => setActiveTab(tab)}
-              className={`font-cinzel text-xs tracking-widest px-6 py-3 transition-colors border-b-2 -mb-px ${
-                activeTab === tab ? 'border-stone-900 text-stone-900' : 'border-transparent text-stone-400 hover:text-stone-600'
-              }`}>
-              {tab.toUpperCase()}
-            </button>
-          ))}
-        </div>
-
-        {/* Tab: Details */}
-        {activeTab === 'details' && (
-          <div className="space-y-6 max-w-2xl">
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { key: 'bride_name', label: "BRIDE'S NAME" },
-                { key: 'groom_name', label: "GROOM'S NAME" },
-                { key: 'akad_date',       label: 'AKAD DATE' },
-                { key: 'akad_time',       label: 'AKAD TIME' },
-                { key: 'reception_date',  label: 'RECEPTION DATE' },
-                { key: 'reception_time',  label: 'RECEPTION TIME' },
-              ].map(({ key, label }) => (
-                <div key={key}>
-                  <label className="font-cinzel text-xs tracking-widest text-stone-400 block mb-1">{label}</label>
-                  <input type="text" value={inv[key] || ''} onChange={e => set(key, e.target.value)}
-                    className="w-full border border-stone-200 px-4 py-3 font-lato text-sm focus:outline-none focus:border-gold-400 transition-colors" />
-                </div>
-              ))}
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <p className={`font-cinzel text-[10px] tracking-widest uppercase ${tk.muted}`}>Edit Undangan</p>
+              <h1 className={`font-playfair text-2xl font-bold ${tk.heading}`}>
+                {inv.bride_full_name || inv.bride_name} &amp; {inv.groom_full_name || inv.groom_name}
+              </h1>
+              <span className={`inline-block mt-1 text-[10px] font-cinzel tracking-widest px-2 py-0.5 rounded-full ${inv.is_published ? tk.badge : tk.badgeDraft}`}>
+                {inv.is_published ? 'DIPUBLIKASI' : 'DRAFT'}
+              </span>
             </div>
-            {[
-              { key: 'akad_venue',      label: 'AKAD VENUE' },
-              { key: 'reception_venue', label: 'RECEPTION VENUE' },
-            ].map(({ key, label }) => (
-              <div key={key}>
-                <label className="font-cinzel text-xs tracking-widest text-stone-400 block mb-1">{label}</label>
-                <input type="text" value={inv[key] || ''} onChange={e => set(key, e.target.value)}
-                  className="w-full border border-stone-200 px-4 py-3 font-lato text-sm focus:outline-none focus:border-gold-400 transition-colors" />
-              </div>
+            <div className="flex gap-2">
+              <a href={`/${inv.slug}`} target="_blank"
+                className={`flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-cinzel tracking-widest transition-all ${tk.btnOutline}`}>
+                <IconEye size={14}/>Lihat
+              </a>
+              <button onClick={handleSave} disabled={saving}
+                className={`flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-cinzel tracking-widest transition-all disabled:opacity-50 ${tk.btnPrimary}`}>
+                <IconDeviceFloppy size={14}/>{saving ? 'Menyimpan...' : 'Simpan'}
+              </button>
+              <button onClick={handlePublish} disabled={publishing}
+                className={`flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-cinzel tracking-widest transition-all disabled:opacity-50 ${inv.is_published ? tk.btnRed : tk.btnGreen}`}>
+                {inv.is_published ? <><IconBan size={14}/>Sembunyikan</> : <><IconSend size={14}/>Publikasi</>}
+              </button>
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <div className={`flex gap-0 mb-6 border-b ${tk.divider}`}>
+            {TABS.map(tab => (
+              <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+                className={`font-cinzel text-[10px] tracking-widest px-5 py-3 transition-colors -mb-px ${activeTab===tab.key ? tk.tabActive : tk.tabDefault}`}>
+                {tab.label.toUpperCase()}
+              </button>
             ))}
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { key: 'venue_lat', label: 'LATITUDE' },
-                { key: 'venue_lng', label: 'LONGITUDE' },
-              ].map(({ key, label }) => (
-                <div key={key}>
-                  <label className="font-cinzel text-xs tracking-widest text-stone-400 block mb-1">{label}</label>
-                  <input type="text" value={inv[key] || ''} onChange={e => set(key, e.target.value)}
-                    className="w-full border border-stone-200 px-4 py-3 font-lato text-sm focus:outline-none focus:border-gold-400 transition-colors" />
-                </div>
-              ))}
-            </div>
-            <button onClick={handleSave} disabled={saving}
-              className="bg-stone-900 hover:bg-stone-700 disabled:opacity-50 text-white font-cinzel text-xs tracking-widest px-8 py-4 transition-colors">
-              {saving ? 'SAVING...' : 'SAVE CHANGES'}
-            </button>
           </div>
-        )}
 
-        {/* Tab: Design — Template & Palette Picker */}
-        {activeTab === 'design' && (
-          <div className="space-y-8 max-w-4xl">
-            {/* Category filter */}
-            <div>
-              <p className="font-cinzel text-xs tracking-widest text-stone-400 mb-3">CATEGORY</p>
-              <div className="flex flex-wrap gap-2">
-                {CATEGORIES.map(cat => (
-                  <button key={cat.key} onClick={() => setActiveCat(cat.key)}
-                    className={`font-cinzel text-xs tracking-widest px-4 py-2 border transition-colors ${
-                      activeCat === cat.key
-                        ? 'bg-stone-900 text-white border-stone-900'
-                        : 'border-stone-300 text-stone-500 hover:border-stone-600 hover:text-stone-700'
-                    }`}>
-                    {cat.label.toUpperCase()}
-                  </button>
-                ))}
+          {/* Tab: Detail */}
+          {activeTab === 'detail' && (
+            <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} className="space-y-4">
+              <div className={`rounded-2xl p-6 ${tk.card}`}>
+                <h2 className={`font-playfair text-base font-semibold mb-4 ${tk.heading}`}>Data Pasangan</h2>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className={`block mb-1 ${tk.label}`}>Nama Mempelai Wanita</label>
+                    <input value={inv.bride_full_name||''} onChange={e=>set('bride_full_name',e.target.value)} className={`w-full px-3 py-2 rounded-lg text-sm ${tk.input}`}/>
+                  </div>
+                  <div>
+                    <label className={`block mb-1 ${tk.label}`}>Nama Mempelai Pria</label>
+                    <input value={inv.groom_full_name||''} onChange={e=>set('groom_full_name',e.target.value)} className={`w-full px-3 py-2 rounded-lg text-sm ${tk.input}`}/>
+                  </div>
+                  <div>
+                    <label className={`block mb-1 ${tk.label}`}>Ayah Mempelai Wanita</label>
+                    <input value={inv.bride_father||''} onChange={e=>set('bride_father',e.target.value)} className={`w-full px-3 py-2 rounded-lg text-sm ${tk.input}`}/>
+                  </div>
+                  <div>
+                    <label className={`block mb-1 ${tk.label}`}>Ibu Mempelai Wanita</label>
+                    <input value={inv.bride_mother||''} onChange={e=>set('bride_mother',e.target.value)} className={`w-full px-3 py-2 rounded-lg text-sm ${tk.input}`}/>
+                  </div>
+                  <div>
+                    <label className={`block mb-1 ${tk.label}`}>Ayah Mempelai Pria</label>
+                    <input value={inv.groom_father||''} onChange={e=>set('groom_father',e.target.value)} className={`w-full px-3 py-2 rounded-lg text-sm ${tk.input}`}/>
+                  </div>
+                  <div>
+                    <label className={`block mb-1 ${tk.label}`}>Ibu Mempelai Pria</label>
+                    <input value={inv.groom_mother||''} onChange={e=>set('groom_mother',e.target.value)} className={`w-full px-3 py-2 rounded-lg text-sm ${tk.input}`}/>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <label className={`block mb-1 ${tk.label}`}><IconPhone size={10} className="inline mr-1"/>Nomor Kontak</label>
+                  <input value={inv.contact_number||''} onChange={e=>set('contact_number',e.target.value)} placeholder="+62812xxxx" className={`w-full px-3 py-2 rounded-lg text-sm ${tk.input}`}/>
+                  <p className={`text-[11px] mt-1 ${tk.muted}`}>Ditampilkan di undangan untuk konfirmasi tamu</p>
+                </div>
+                <div className="mt-4">
+                  <label className={`block mb-1 ${tk.label}`}>Bio Mempelai Wanita</label>
+                  <textarea value={inv.bride_bio||''} onChange={e=>set('bride_bio',e.target.value)} rows={2} className={`w-full px-3 py-2 rounded-lg text-sm resize-none ${tk.input}`}/>
+                </div>
+                <div className="mt-4">
+                  <label className={`block mb-1 ${tk.label}`}>Bio Mempelai Pria</label>
+                  <textarea value={inv.groom_bio||''} onChange={e=>set('groom_bio',e.target.value)} rows={2} className={`w-full px-3 py-2 rounded-lg text-sm resize-none ${tk.input}`}/>
+                </div>
               </div>
-            </div>
+            </motion.div>
+          )}
 
-            {/* Template grid */}
-            <div>
-              <p className="font-cinzel text-xs tracking-widest text-stone-400 mb-3">TEMPLATE</p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                {Object.values(themes)
-                  .filter(t => (t as any).category === activeCat || (!((t as any).category) && activeCat === 'classic'))
-                  .map(t => {
+          {/* Tab: Acara */}
+          {activeTab === 'acara' && (
+            <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} className="space-y-4">
+              <div className={`rounded-2xl p-6 ${tk.card}`}>
+                <h2 className={`font-playfair text-base font-semibold mb-4 ${tk.heading}`}>Acara & Lokasi</h2>
+                <p className={`font-cinzel text-[10px] tracking-widest uppercase mb-3 ${tk.sub}`}>Akad Nikah</p>
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <label className={`block mb-1 ${tk.label}`}><IconCalendar size={10} className="inline mr-1"/>Tanggal</label>
+                    <input type="date" value={inv.akad_date?.split('T')[0]||''} onChange={e=>set('akad_date',e.target.value)} className={`w-full px-3 py-2 rounded-lg text-sm ${tk.input}`}/>
+                  </div>
+                  <div>
+                    <label className={`block mb-1 ${tk.label}`}><IconClock size={10} className="inline mr-1"/>Waktu</label>
+                    <input type="time" value={inv.akad_time||''} onChange={e=>set('akad_time',e.target.value)} className={`w-full px-3 py-2 rounded-lg text-sm ${tk.input}`}/>
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <label className={`block mb-1 ${tk.label}`}>Lokasi Akad</label>
+                  <input value={inv.akad_venue||''} onChange={e=>set('akad_venue',e.target.value)} className={`w-full px-3 py-2 rounded-lg text-sm ${tk.input}`}/>
+                </div>
+                <hr className={`border-t ${tk.divider} mb-4`}/>
+                <p className={`font-cinzel text-[10px] tracking-widest uppercase mb-3 ${tk.sub}`}>Resepsi</p>
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <label className={`block mb-1 ${tk.label}`}><IconCalendar size={10} className="inline mr-1"/>Tanggal</label>
+                    <input type="date" value={inv.reception_date?.split('T')[0]||''} onChange={e=>set('reception_date',e.target.value)} className={`w-full px-3 py-2 rounded-lg text-sm ${tk.input}`}/>
+                  </div>
+                  <div>
+                    <label className={`block mb-1 ${tk.label}`}><IconClock size={10} className="inline mr-1"/>Waktu</label>
+                    <input type="time" value={inv.reception_time||''} onChange={e=>set('reception_time',e.target.value)} className={`w-full px-3 py-2 rounded-lg text-sm ${tk.input}`}/>
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <label className={`block mb-1 ${tk.label}`}>Lokasi Resepsi</label>
+                  <input value={inv.reception_venue||''} onChange={e=>set('reception_venue',e.target.value)} className={`w-full px-3 py-2 rounded-lg text-sm ${tk.input}`}/>
+                </div>
+                <hr className={`border-t ${tk.divider} mb-4`}/>
+                <p className={`font-cinzel text-[10px] tracking-widest uppercase mb-3 ${tk.sub}`}><IconMapPin size={10} className="inline mr-1"/>Koordinat Maps</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={`block mb-1 ${tk.label}`}>Latitude</label>
+                    <input value={inv.venue_lat||''} onChange={e=>set('venue_lat',e.target.value)} placeholder="-6.200000" className={`w-full px-3 py-2 rounded-lg text-sm ${tk.input}`}/>
+                  </div>
+                  <div>
+                    <label className={`block mb-1 ${tk.label}`}>Longitude</label>
+                    <input value={inv.venue_lng||''} onChange={e=>set('venue_lng',e.target.value)} placeholder="106.816666" className={`w-full px-3 py-2 rounded-lg text-sm ${tk.input}`}/>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <label className={`block mb-1 ${tk.label}`}><IconCalendar size={10} className="inline mr-1"/>Tanggal Pernikahan</label>
+                  <input type="date" value={inv.wedding_date?.split('T')[0]||''} onChange={e=>set('wedding_date',e.target.value)} className={`w-full px-3 py-2 rounded-lg text-sm ${tk.input}`}/>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Tab: Konten */}
+          {activeTab === 'konten' && (
+            <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} className="space-y-4">
+              {/* Timeline */}
+              <div className={`rounded-2xl p-5 ${tk.card}`}>
+                <div className="flex items-center justify-between mb-1">
+                  <div>
+                    <p className={`font-playfair text-sm font-semibold ${tk.heading}`}>Timeline / Rundown</p>
+                    <p className={`text-[11px] ${tk.muted}`}>Susunan acara yang ditampilkan di undangan</p>
+                  </div>
+                  <button onClick={() => setShowTimeline(v => !v)}
+                    className={`relative w-11 h-6 rounded-full transition-colors ${showTimeline ? tk.toggleOn : tk.toggleOff}`}>
+                    <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${showTimeline ? 'left-5' : 'left-0.5'}`}/>
+                  </button>
+                </div>
+                <AnimatePresence>
+                  {showTimeline && (
+                    <motion.div initial={{height:0,opacity:0}} animate={{height:'auto',opacity:1}} exit={{height:0,opacity:0}} className="overflow-hidden">
+                      <div className="mt-3 space-y-2">
+                        {timeline.map((item, i) => (
+                          <div key={i} className="flex gap-2 items-center">
+                            <input value={item.time} onChange={e=>updateTimeline(i,'time',e.target.value)}
+                              placeholder="08.00" className={`w-20 px-2 py-1.5 rounded-lg text-xs ${tk.input}`}/>
+                            <input value={item.title} onChange={e=>updateTimeline(i,'title',e.target.value)}
+                              placeholder="Akad Nikah" className={`flex-1 px-2 py-1.5 rounded-lg text-xs ${tk.input}`}/>
+                            <button onClick={()=>removeTimeline(i)} className={`p-1.5 rounded-lg ${tk.btnDanger}`}><IconTrash size={14}/></button>
+                          </div>
+                        ))}
+                        {timeline.length < 10 && (
+                          <button onClick={addTimeline} className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg ${tk.btnGhost}`}>
+                            <IconPlus size={13}/>Tambah Item
+                          </button>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Bank Transfer */}
+              <div className={`rounded-2xl p-5 ${tk.card}`}>
+                <div className="flex items-center justify-between mb-1">
+                  <div>
+                    <p className={`font-playfair text-sm font-semibold ${tk.heading}`}><IconCreditCard size={14} className="inline mr-1"/>Transfer Bank / Hadiah</p>
+                    <p className={`text-[11px] ${tk.muted}`}>Tampilkan rekening untuk amplop digital</p>
+                  </div>
+                  <button onClick={() => setShowBank(v => !v)}
+                    className={`relative w-11 h-6 rounded-full transition-colors ${showBank ? tk.toggleOn : tk.toggleOff}`}>
+                    <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${showBank ? 'left-5' : 'left-0.5'}`}/>
+                  </button>
+                </div>
+                <AnimatePresence>
+                  {showBank && (
+                    <motion.div initial={{height:0,opacity:0}} animate={{height:'auto',opacity:1}} exit={{height:0,opacity:0}} className="overflow-hidden">
+                      <div className="mt-3 space-y-3">
+                        {bankAccounts.map((acct, i) => (
+                          <div key={i} className={`p-3 rounded-xl border ${tk.divider} space-y-2`}>
+                            <div className="flex justify-between items-center">
+                              <p className={`text-[10px] font-cinzel tracking-widest ${tk.muted}`}>Rekening {i+1}</p>
+                              <button onClick={()=>removeBank(i)} className={`p-1 rounded ${tk.btnDanger}`}><IconTrash size={12}/></button>
+                            </div>
+                            <div className="grid grid-cols-3 gap-2">
+                              <div>
+                                <label className={`block mb-1 ${tk.label}`}>Bank</label>
+                                <input value={acct.bank} onChange={e=>updateBank(i,'bank',e.target.value)} placeholder="BCA" className={`w-full px-2 py-1.5 rounded-lg text-xs ${tk.input}`}/>
+                              </div>
+                              <div>
+                                <label className={`block mb-1 ${tk.label}`}>No. Rekening</label>
+                                <input value={acct.number} onChange={e=>updateBank(i,'number',e.target.value)} placeholder="1234567890" className={`w-full px-2 py-1.5 rounded-lg text-xs ${tk.input}`}/>
+                              </div>
+                              <div>
+                                <label className={`block mb-1 ${tk.label}`}>Nama</label>
+                                <input value={acct.name} onChange={e=>updateBank(i,'name',e.target.value)} placeholder="Nama pemilik" className={`w-full px-2 py-1.5 rounded-lg text-xs ${tk.input}`}/>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        {bankAccounts.length < 5 && (
+                          <button onClick={addBank} className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg ${tk.btnGhost}`}>
+                            <IconPlus size={13}/>Tambah Rekening
+                          </button>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Media */}
+              <div className={`rounded-2xl p-5 ${tk.card}`}>
+                <h2 className={`font-playfair text-sm font-semibold mb-4 ${tk.heading}`}>Media</h2>
+                <div className="space-y-4">
+                  <div>
+                    <label className={`block mb-2 ${tk.label}`}><IconPhoto size={10} className="inline mr-1"/>Foto Sampul</label>
+                    {inv.cover_photo_url && <img src={inv.cover_photo_url} alt="cover" className="w-full h-32 object-cover rounded-xl mb-2"/>}
+                    <label className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs cursor-pointer transition-all w-fit ${tk.btnOutline}`}>
+                      <IconPhoto size={14}/>{uploading==='photo' ? 'Mengunggah...' : 'Unggah Foto'}
+                      <input type="file" accept="image/*" className="hidden" onChange={e => { if(e.target.files?.[0]) handleUpload(e.target.files[0],'photo') }}/>
+                    </label>
+                  </div>
+                  <div>
+                    <label className={`block mb-2 ${tk.label}`}><IconMusic size={10} className="inline mr-1"/>Musik Latar</label>
+                    {inv.music_url && <p className={`text-xs mb-2 ${tk.muted}`}>{inv.music_url.split('/').pop()}</p>}
+                    <label className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs cursor-pointer transition-all w-fit ${tk.btnOutline}`}>
+                      <IconMusic size={14}/>{uploading==='music' ? 'Mengunggah...' : 'Unggah Musik'}
+                      <input type="file" accept="audio/*" className="hidden" onChange={e => { if(e.target.files?.[0]) handleUpload(e.target.files[0],'music') }}/>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Tab: Desain */}
+          {activeTab === 'desain' && (
+            <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} className="space-y-4">
+              <div className={`rounded-2xl p-6 ${tk.card}`}>
+                <h2 className={`font-playfair text-base font-semibold mb-4 ${tk.heading}`}>Tema & Desain</h2>
+                <div className="flex gap-2 flex-wrap mb-4">
+                  {CATEGORIES.map(c => (
+                    <button key={c.slug} onClick={() => setCatFilter(c.slug)}
+                      className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${catFilter===c.slug ? tk.catActive : tk.catDefault}`}>
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="grid grid-cols-3 gap-2 max-h-72 overflow-y-auto pr-1">
+                  {filtered.map((t: any) => {
+                    const pal = (templatePalettes[t.slug]||[])[0]
+                    const bg = pal?.bgPage || t.bgPage || '#FAF7F2'
+                    const primary = pal?.primaryHex || t.primaryHex || '#6B3F2A'
                     const isSelected = inv.theme_slug === t.slug
                     return (
-                      <button key={t.slug} onClick={() => {
-                        set('theme_slug', t.slug)
-                        const palettes = templatePalettes[t.slug]
-                        if (palettes?.length) set('palette_slug', (t as any).defaultPalette || palettes[0].slug)
-                        else set('palette_slug', null)
-                      }}
-                        className={`relative border-2 p-3 text-left transition-all ${
-                          isSelected ? 'border-stone-900 shadow-md' : 'border-stone-200 hover:border-stone-400'
-                        }`}
-                        style={{ background: t.gradientFrom }}>
-                        {/* Color preview dots */}
-                        <div className="flex gap-1 mb-2">
-                          <span className="w-4 h-4 rounded-full border border-white/50 shadow-sm" style={{ background: t.primaryHex }} />
-                          <span className="w-4 h-4 rounded-full border border-white/50 shadow-sm" style={{ background: t.gradientTo }} />
-                          {(t as any).secondaryHex && (
-                            <span className="w-4 h-4 rounded-full border border-white/50 shadow-sm" style={{ background: (t as any).secondaryHex }} />
-                          )}
+                      <button key={t.slug} onClick={() => { set('theme_slug', t.slug); set('palette_slug', '') }}
+                        className={`rounded-xl overflow-hidden transition-all ${isSelected ? tk.tplSelected : tk.tplDefault}`}>
+                        <div className="h-16 flex flex-col items-center justify-center gap-1" style={{background:bg}}>
+                          <span className="text-base opacity-60" style={{color:primary}}>{t.ornamentChar||'*'}</span>
+                          <div className="flex gap-0.5">
+                            {(templatePalettes[t.slug]||[]).slice(0,4).map((p:any,pi:number) => (
+                              <div key={pi} className="w-2 h-2 rounded-full" style={{background:p.primaryHex}}/>
+                            ))}
+                          </div>
                         </div>
-                        <p className="font-cinzel text-xs tracking-widest truncate" style={{ color: t.primaryHex }}>
-                          {t.name.toUpperCase()}
-                        </p>
-                        {isSelected && (
-                          <span className="absolute top-2 right-2 w-4 h-4 bg-stone-900 rounded-full flex items-center justify-center">
-                            <svg width="8" height="8" viewBox="0 0 8 8"><path d="M1 4l2 2 4-4" stroke="white" strokeWidth="1.5" fill="none"/></svg>
-                          </span>
-                        )}
-                      </button>
-                    )
-                  })}
-              </div>
-            </div>
-
-            {/* Palette picker — only shown when selected template has palettes */}
-            {inv.theme_slug && templatePalettes[inv.theme_slug] && (
-              <div>
-                <p className="font-cinzel text-xs tracking-widest text-stone-400 mb-3">COLOR PALETTE</p>
-                <div className="flex flex-wrap gap-3">
-                  {getTemplatePalettes(inv.theme_slug).map(palette => {
-                    const isSelected = inv.palette_slug === palette.slug
-                    return (
-                      <button key={palette.slug} onClick={() => set('palette_slug', palette.slug)}
-                        className={`flex items-center gap-3 border-2 px-4 py-3 transition-all ${
-                          isSelected ? 'border-stone-900 shadow-md' : 'border-stone-200 hover:border-stone-400'
-                        }`}>
-                        {/* Palette swatch */}
-                        <div className="flex gap-1">
-                          <span className="w-5 h-5 rounded-full border border-stone-200 shadow-sm" style={{ background: palette.primaryHex }} />
-                          <span className="w-5 h-5 rounded-full border border-stone-200 shadow-sm" style={{ background: palette.gradientFrom }} />
-                          <span className="w-5 h-5 rounded-full border border-stone-200 shadow-sm" style={{ background: palette.bgDark.replace('bg-[','').replace(']','') || '#1c1c1c' }} />
-                        </div>
-                        <div className="text-left">
-                          <p className="font-cinzel text-xs tracking-widest text-stone-700">{palette.name.toUpperCase()}</p>
-                          <p className="font-lato text-xs text-stone-400">{palette.primaryHex}</p>
-                        </div>
-                        {isSelected && (
-                          <span className="ml-auto w-4 h-4 bg-stone-900 rounded-full flex items-center justify-center">
-                            <svg width="8" height="8" viewBox="0 0 8 8"><path d="M1 4l2 2 4-4" stroke="white" strokeWidth="1.5" fill="none"/></svg>
-                          </span>
-                        )}
+                        <p className={`text-[9px] font-cinzel tracking-wide px-1 py-1 text-center truncate ${tk.muted}`}>{t.name}</p>
                       </button>
                     )
                   })}
                 </div>
+                {(templatePalettes[inv.theme_slug]||[]).length > 0 && (
+                  <div className="mt-4">
+                    <label className={`block mb-2 ${tk.label}`}>Pilih Palet Warna</label>
+                    <div className="flex gap-2 flex-wrap">
+                      {templatePalettes[inv.theme_slug].map((p: any) => (
+                        <button key={p.slug} onClick={() => set('palette_slug', p.slug)} title={p.name}
+                          className={`w-7 h-7 rounded-full border-2 transition-all ${inv.palette_slug===p.slug ? 'border-[#6B3F2A] scale-110' : 'border-transparent hover:scale-105'}`}
+                          style={{background:p.primaryHex}}/>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
+            </motion.div>
+          )}
 
-            {/* Preview bar */}
-            {inv.theme_slug && (
-              <div className="border border-stone-200 p-4 flex items-center justify-between bg-white">
-                <div>
-                  <p className="font-cinzel text-xs tracking-widest text-stone-400">SELECTED</p>
-                  <p className="font-playfair text-lg mt-1">
-                    {themes[inv.theme_slug]?.name}
-                    {inv.palette_slug && templatePalettes[inv.theme_slug] && (
-                      <span className="font-lato text-sm text-stone-400 ml-2">
-                        — {getTemplatePalettes(inv.theme_slug).find(p => p.slug === inv.palette_slug)?.name}
-                      </span>
-                    )}
-                  </p>
-                </div>
-                <div className="flex gap-3">
-                  <a href={`/${inv.slug}`} target="_blank"
-                    className="border border-stone-300 text-stone-600 font-cinzel text-xs tracking-widest px-4 py-2 hover:bg-stone-50 transition-colors">
-                    PREVIEW ↗
-                  </a>
-                  <button onClick={handleSave} disabled={saving}
-                    className="bg-stone-900 hover:bg-stone-700 disabled:opacity-50 text-white font-cinzel text-xs tracking-widest px-6 py-2 transition-colors">
-                    {saving ? 'SAVING...' : 'SAVE'}
+          {/* Tab: Bagikan */}
+          {activeTab === 'bagikan' && (
+            <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} className="space-y-4">
+              <div className={`rounded-2xl p-6 ${tk.card}`}>
+                <h2 className={`font-playfair text-base font-semibold mb-4 ${tk.heading}`}>Bagikan Undangan</h2>
+                <div className={`flex items-center gap-2 p-3 rounded-xl border ${tk.divider} mb-4`}>
+                  <span className={`flex-1 text-sm font-mono truncate ${tk.muted}`}>{shareUrl}</span>
+                  <button onClick={copyLink} className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs transition-all ${tk.btnOutline}`}>
+                    {copied ? <><IconCheck size={13}/>Disalin!</> : <><IconCopy size={13}/>Salin</>}
                   </button>
                 </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Tab: Media */}
-        {activeTab === 'media' && (
-          <div className="space-y-8 max-w-2xl">
-            {/* Cover photo */}
-            <div className="border border-stone-200 p-6">
-              <h3 className="font-cinzel text-sm tracking-widest mb-4">COVER PHOTO</h3>
-              {inv.cover_photo_url && (
-                <div className="mb-4 w-32 h-32 rounded overflow-hidden border border-stone-200">
-                  <img src={inv.cover_photo_url} alt="Cover" className="w-full h-full object-cover" />
+                <a href={`https://wa.me/?text=Kami%20mengundang%20Anda%20ke%20pernikahan%20kami.%20Lihat%20undangan%20di%3A%20${encodeURIComponent(shareUrl)}`}
+                  target="_blank"
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all w-fit ${tk.btnGreen}`}>
+                  <IconBrandWhatsapp size={16}/>Bagikan via WhatsApp
+                </a>
+                <div className={`mt-4 p-4 rounded-xl ${tk.infoBox} text-xs`}>
+                  Status: <strong>{inv.is_published ? 'Dipublikasikan — tamu dapat mengakses undangan' : 'Draft — hanya Anda yang dapat melihat'}</strong>
                 </div>
-              )}
-              <label className={`cursor-pointer inline-flex items-center gap-3 border-2 border-dashed border-stone-300 hover:border-gold-400 px-6 py-4 transition-colors ${uploading === 'photo' ? 'opacity-50 pointer-events-none' : ''}`}>
-                <span className="font-cinzel text-xs tracking-widest text-stone-500">
-                  {uploading === 'photo' ? 'UPLOADING...' : '+ UPLOAD PHOTO'}
-                </span>
-                <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden"
-                  onChange={e => e.target.files?.[0] && handleUpload(e.target.files[0], 'photo')} />
-              </label>
-              <p className="font-lato text-xs text-stone-400 mt-2">JPG, PNG or WebP. Max 10MB.</p>
-            </div>
-
-            {/* Background music */}
-            <div className="border border-stone-200 p-6">
-              <h3 className="font-cinzel text-sm tracking-widest mb-4">BACKGROUND MUSIC</h3>
-              {inv.music_url && (
-                <div className="mb-4 p-3 bg-stone-50 border border-stone-100 font-lato text-xs text-stone-500 truncate">
-                  {inv.music_url}
-                </div>
-              )}
-              <label className={`cursor-pointer inline-flex items-center gap-3 border-2 border-dashed border-stone-300 hover:border-gold-400 px-6 py-4 transition-colors ${uploading === 'music' ? 'opacity-50 pointer-events-none' : ''}`}>
-                <span className="font-cinzel text-xs tracking-widest text-stone-500">
-                  {uploading === 'music' ? 'UPLOADING...' : '+ UPLOAD MUSIC'}
-                </span>
-                <input type="file" accept="audio/mpeg,audio/mp3" className="hidden"
-                  onChange={e => e.target.files?.[0] && handleUpload(e.target.files[0], 'music')} />
-              </label>
-              <p className="font-lato text-xs text-stone-400 mt-2">MP3 only. Max 10MB.</p>
-              <div className="mt-4">
-                <label className="font-cinzel text-xs tracking-widest text-stone-400 block mb-1">OR PASTE MUSIC URL</label>
-                <input type="text" value={inv.music_url || ''} onChange={e => set('music_url', e.target.value)}
-                  className="w-full border border-stone-200 px-4 py-3 font-lato text-sm focus:outline-none focus:border-gold-400"
-                  placeholder="https://example.com/music.mp3" />
               </div>
-            </div>
+            </motion.div>
+          )}
 
-            <button onClick={handleSave} disabled={saving}
-              className="bg-stone-900 hover:bg-stone-700 disabled:opacity-50 text-white font-cinzel text-xs tracking-widest px-8 py-4 transition-colors">
-              {saving ? 'SAVING...' : 'SAVE CHANGES'}
-            </button>
-          </div>
-        )}
-
-        {/* Tab: Share */}
-        {activeTab === 'share' && (
-          <div className="max-w-2xl space-y-6">
-            <div className="border border-stone-200 p-6">
-              <h3 className="font-cinzel text-sm tracking-widest mb-4">INVITATION LINK</h3>
-              <div className="flex items-center gap-3">
-                <input readOnly value={shareUrl}
-                  className="flex-1 border border-stone-200 px-4 py-3 font-lato text-sm bg-stone-50" />
-                <button
-                  onClick={() => { navigator.clipboard.writeText(shareUrl); toast.success('Copied!') }}
-                  className="bg-stone-900 text-white font-cinzel text-xs tracking-widest px-5 py-3 hover:bg-stone-700 transition-colors">
-                  COPY
-                </button>
-              </div>
-            </div>
-
-            <div className="border border-stone-200 p-6">
-              <h3 className="font-cinzel text-sm tracking-widest mb-2">PERSONALIZED LINK</h3>
-              <p className="font-lato text-sm text-stone-500 mb-4">
-                Add <code className="bg-stone-100 px-1">?to=GuestName</code> to show a personalized greeting on the opening screen.
-              </p>
-              <div className="bg-stone-50 p-4 font-lato text-sm text-stone-600 border border-stone-100">
-                {shareUrl}?to=<span className="text-gold-600">Pak+Ahmad</span>
-              </div>
-            </div>
-
-            <div className="border border-stone-200 p-6">
-              <h3 className="font-cinzel text-sm tracking-widest mb-4">SHARE VIA WHATSAPP</h3>
-              <a
-                href={`https://wa.me/?text=${encodeURIComponent(`You are invited to our wedding! Open your invitation here: ${shareUrl}`)}`}
-                target="_blank"
-                className="inline-flex items-center gap-3 bg-green-500 hover:bg-green-600 text-white font-cinzel text-xs tracking-widest px-6 py-3 transition-colors"
-              >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                SHARE ON WHATSAPP
-              </a>
-            </div>
-
-            <div className={`border p-4 font-lato text-sm ${inv.is_published ? 'border-green-200 bg-green-50 text-green-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>
-              {inv.is_published
-                ? '✓ Your invitation is published and accessible to guests.'
-                : '⚠ Your invitation is not yet published. Guests cannot view it until you publish it.'}
-            </div>
-          </div>
-        )}
-      </main>
+        </div>
+      </div>
     </div>
   )
 }

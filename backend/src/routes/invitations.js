@@ -101,6 +101,7 @@ router.put('/:id', auth, async (req, res) => {
     'gallery_photos','love_story','gift_accounts',
     'bride_full_name','groom_full_name','bride_bio','groom_bio',
     'bride_father','bride_mother','groom_father','groom_mother',
+    'timeline','contact_number',
   ]
   const updates = []
   const values  = []

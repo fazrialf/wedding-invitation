@@ -1,469 +1,474 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/AuthContext'
 import { useRouter } from 'next/navigation'
 import DashboardSidebar from '@/components/studio/DashboardSidebar'
 import axios from 'axios'
 import toast, { Toaster } from 'react-hot-toast'
-import { getTemplatesByCategory, getAllTemplates, themes } from '@/themes/config'
+import { getAllTemplates, themes } from '@/themes/config'
 import { templatePalettes } from '@/themes/palettes'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  IconArrowRight, IconArrowLeft, IconPlus, IconTrash, IconPhone,
+  IconMapPin, IconCalendar, IconClock, IconCheck,
+} from '@tabler/icons-react'
 
+const STEPS = ['Data Pasangan', 'Acara & Lokasi', 'Konten', 'Tema']
 const CATEGORIES = [
-  { slug: 'all',        label: 'All',              emoji: '🎨' },
-  { slug: 'minimalist', label: 'Minimalist',        emoji: '✦'  },
-  { slug: 'floral',     label: 'Floral',            emoji: '🌸' },
-  { slug: 'nature',     label: 'Nature',            emoji: '🌿' },
-  { slug: 'fairytale',  label: 'Fairytale',         emoji: '✨' },
-  { slug: 'adat',       label: 'Adat/Traditional',  emoji: '🏛'  },
+  { slug: 'all', label: 'Semua' },
+  { slug: 'minimalist', label: 'Minimalis' },
+  { slug: 'floral', label: 'Floral' },
+  { slug: 'nature', label: 'Alam' },
+  { slug: 'fairytale', label: 'Dongeng' },
+  { slug: 'adat', label: 'Adat' },
 ]
 
-const CAT_DISPLAY: Record<string, string> = {
-  minimalist: 'Minimalist',
-  floral:     'Floral',
-  nature:     'Nature',
-  fairytale:  'Fairytale',
-  adat:       'Adat',
+type TimelineItem = { time: string; title: string }
+
+function getTheme() {
+  if (typeof window === 'undefined') return 'light'
+  return localStorage.getItem('pelaminan-theme') || 'light'
 }
 
-// ── Phone frame live preview ───────────────────────────────────────────────
-function PhonePreview({
-  brideName,
-  groomName,
-  weddingDate,
-  themeSlug,
-  paletteSlug,
-}: {
-  brideName:   string
-  groomName:   string
-  weddingDate: string
-  themeSlug:   string
-  paletteSlug: string
+const TK = {
+  light: {
+    page: 'bg-[#FAF7F2]',
+    card: 'bg-white border border-[#E8DCC8]',
+    heading: 'text-[#2C1A0E]',
+    sub: 'text-[#6B3F2A]',
+    muted: 'text-[#6B3F2A]/60',
+    input: 'bg-white border border-[#E8DCC8] text-[#2C1A0E] focus:border-[#C8A96E] focus:outline-none placeholder:text-[#6B3F2A]/30',
+    label: 'font-cinzel text-[10px] tracking-widest uppercase text-[#6B3F2A]',
+    btnPrimary: 'bg-[#6B3F2A] hover:bg-[#2C1A0E] text-[#FAF7F2]',
+    btnOutline: 'border border-[#C8A96E] text-[#6B3F2A] hover:bg-[#E8DCC8]',
+    btnGhost: 'text-[#6B3F2A]/60 hover:text-[#6B3F2A] hover:bg-[#E8DCC8]/50',
+    btnDanger: 'text-[#8B1A1A]/60 hover:text-[#8B1A1A] hover:bg-red-50',
+    stepActive: 'bg-[#6B3F2A] text-white',
+    stepDone: 'bg-[#E8DCC8] text-[#6B3F2A] cursor-pointer',
+    stepPending: 'bg-white border border-[#E8DCC8] text-[#6B3F2A]/40',
+    stepLineDone: 'bg-[#6B3F2A]',
+    stepLine: 'bg-[#E8DCC8]',
+    divider: 'border-[#E8DCC8]',
+    toggleOn: 'bg-[#6B3F2A]',
+    toggleOff: 'bg-[#E8DCC8]',
+    tplSelected: 'border-2 border-[#6B3F2A] shadow-md',
+    tplDefault: 'border-2 border-[#E8DCC8] hover:border-[#C8A96E]',
+    catActive: 'bg-[#6B3F2A] text-white',
+    catDefault: 'bg-white border border-[#E8DCC8] text-[#6B3F2A] hover:border-[#C8A96E]',
+    infoBox: 'bg-[#E8DCC8]/40 border border-[#C8A96E]/30 text-[#6B3F2A]/80',
+  },
+  dark: {
+    page: 'bg-[#1C0F07]',
+    card: 'bg-[#3D2410] border border-[#4A2E18]',
+    heading: 'text-[#E8DCC8]',
+    sub: 'text-[#C8A96E]',
+    muted: 'text-[#C8A96E]/50',
+    input: 'bg-[#2C1A0E] border border-[#4A2E18] text-[#E8DCC8] focus:border-[#C8A96E] focus:outline-none placeholder:text-[#C8A96E]/30',
+    label: 'font-cinzel text-[10px] tracking-widest uppercase text-[#C8A96E]',
+    btnPrimary: 'bg-[#C8A96E] hover:bg-[#E8DCC8] text-[#2C1A0E]',
+    btnOutline: 'border border-[#C8A96E]/50 text-[#C8A96E] hover:bg-[#6B3F2A]/20',
+    btnGhost: 'text-[#C8A96E]/50 hover:text-[#C8A96E] hover:bg-[#4A2E18]',
+    btnDanger: 'text-red-400/60 hover:text-red-400 hover:bg-red-900/20',
+    stepActive: 'bg-[#C8A96E] text-[#2C1A0E]',
+    stepDone: 'bg-[#4A2E18] text-[#C8A96E] cursor-pointer',
+    stepPending: 'bg-[#3D2410] border border-[#4A2E18] text-[#C8A96E]/30',
+    stepLineDone: 'bg-[#C8A96E]',
+    stepLine: 'bg-[#4A2E18]',
+    divider: 'border-[#4A2E18]',
+    toggleOn: 'bg-[#C8A96E]',
+    toggleOff: 'bg-[#4A2E18]',
+    tplSelected: 'border-2 border-[#C8A96E] shadow-md',
+    tplDefault: 'border-2 border-[#4A2E18] hover:border-[#C8A96E]',
+    catActive: 'bg-[#C8A96E] text-[#2C1A0E]',
+    catDefault: 'bg-[#3D2410] border border-[#4A2E18] text-[#C8A96E] hover:border-[#C8A96E]',
+    infoBox: 'bg-[#4A2E18]/40 border border-[#C8A96E]/20 text-[#C8A96E]/70',
+  },
+}
+
+
+function PhonePreview({ brideName, groomName, weddingDate, themeSlug, paletteSlug }: {
+  brideName: string; groomName: string; weddingDate: string
+  themeSlug: string; paletteSlug: string
 }) {
-  const theme   = themes[themeSlug]
-  const palette = (templatePalettes[themeSlug] ?? []).find(p => p.slug === paletteSlug)
-
-  const bg      = theme?.bgPage      ?? 'bg-white'
-  const primary = palette?.primaryHex ?? theme?.primaryHex ?? '#b49a72'
-  const fontH   = theme?.fontHeading  ?? 'font-playfair'
-  const fontB   = theme?.fontBody     ?? 'font-lato'
-  const ornChar = theme?.ornamentChar ?? '✦'
-
-  const dateStr = weddingDate
-    ? new Date(weddingDate).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })
-    : 'Your Wedding Date'
+  const t = themes[themeSlug] || themes['gold']
+  const palettes = templatePalettes[themeSlug] || []
+  const pal = palettes.find((p: any) => p.slug === paletteSlug)
+  const primary = pal?.primaryHex || t.primaryHex || '#6B3F2A'
+  const bg = pal?.bgPage || t.bgPage || '#FAF7F2'
+  const dateStr = weddingDate ? new Date(weddingDate).toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' }) : 'Tanggal Pernikahan'
 
   return (
-    // Outer phone shell
-    <div className="relative mx-auto w-[220px] flex-shrink-0">
-      {/* Phone border */}
-      <div className="relative rounded-[32px] border-[6px] border-stone-800 shadow-2xl overflow-hidden bg-stone-800">
-        {/* Notch */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-4 bg-stone-800 rounded-b-xl z-20" />
-        {/* Screen */}
-        <div className={`${bg} w-full h-[420px] overflow-hidden relative flex flex-col`}>
-
-          {/* Top ornament strip */}
-          <div className="flex justify-center gap-1 pt-6 pb-1">
-            {[0.3, 0.6, 1, 0.6, 0.3].map((op, i) => (
-              <span key={i} style={{ color: primary, opacity: op, fontSize: 8 }}>{ornChar}</span>
-            ))}
-          </div>
-
-          {/* Badge */}
-          <div className="flex justify-center mt-1">
-            <span
-              className={`${fontB} text-[7px] tracking-widest px-2 py-0.5 border`}
-              style={{ color: primary, borderColor: primary, opacity: 0.8 }}
-            >
-              WEDDING INVITATION
-            </span>
-          </div>
-
-          {/* Couple names */}
-          <div className="flex-1 flex flex-col items-center justify-center px-4 text-center">
-            <p className={`${fontH} text-[9px] tracking-widest mb-1`} style={{ color: primary, opacity: 0.6 }}>
-              THE WEDDING OF
-            </p>
-            <h2
-              className={`${fontH} leading-tight mb-1`}
-              style={{ color: primary, fontSize: brideName || groomName ? 18 : 14 }}
-            >
-              {brideName || 'Bride'}
-            </h2>
-            <span style={{ color: primary, opacity: 0.5, fontSize: 10 }}>&amp;</span>
-            <h2
-              className={`${fontH} leading-tight mt-1`}
-              style={{ color: primary, fontSize: brideName || groomName ? 18 : 14 }}
-            >
-              {groomName || 'Groom'}
-            </h2>
-
-            {/* Divider */}
-            <div className="flex items-center gap-1 my-3 w-full justify-center">
-              <div className="flex-1 h-px max-w-[30px]" style={{ backgroundColor: primary, opacity: 0.3 }} />
-              <span style={{ color: primary, opacity: 0.5, fontSize: 8 }}>{ornChar}</span>
-              <div className="flex-1 h-px max-w-[30px]" style={{ backgroundColor: primary, opacity: 0.3 }} />
-            </div>
-
-            {/* Date */}
-            <p className={`${fontB} text-[8px] tracking-wider`} style={{ color: primary, opacity: 0.7 }}>
-              {dateStr}
-            </p>
-          </div>
-
-          {/* Bottom ornament strip */}
-          <div className="flex justify-center gap-1 pb-5">
-            {[0.3, 0.6, 1, 0.6, 0.3].map((op, i) => (
-              <span key={i} style={{ color: primary, opacity: op, fontSize: 8 }}>{ornChar}</span>
-            ))}
-          </div>
+    <div className="flex flex-col items-center">
+      <p className="font-cinzel text-[9px] tracking-widest uppercase text-[#6B3F2A]/60 mb-3">Pratinjau</p>
+      <div className="relative w-[160px] h-[290px] rounded-[28px] border-[5px] border-stone-800 shadow-2xl overflow-hidden flex-shrink-0" style={{ background: bg }}>
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-4 bg-stone-800 rounded-b-xl z-10" />
+        <div className="w-full h-full flex flex-col items-center justify-center px-3 text-center gap-1">
+          <div className="text-lg opacity-40" style={{ color: primary }}>{t.ornamentChar || '✦'}</div>
+          <p className="font-cinzel text-[7px] tracking-widest uppercase opacity-50" style={{ color: primary }}>Undangan Pernikahan</p>
+          <div className="w-8 border-t my-1 opacity-30" style={{ borderColor: primary }} />
+          <p className="font-playfair text-[11px] font-semibold leading-tight" style={{ color: primary }}>
+            {brideName || 'Nama Mempelai'}<br/>
+            <span className="text-[8px] font-normal opacity-60">&</span><br/>
+            {groomName || 'Nama Mempelai'}
+          </p>
+          <div className="w-8 border-t my-1 opacity-30" style={{ borderColor: primary }} />
+          <p className="font-lato text-[7px] opacity-60" style={{ color: primary }}>{dateStr}</p>
+          <div className="text-xs opacity-20 mt-1" style={{ color: primary }}>{t.ornamentChar || '✦'}</div>
         </div>
       </div>
-
-      {/* Label */}
-      <p className="text-center font-cinzel text-xs tracking-widest text-stone-400 mt-3">
-        LIVE PREVIEW
-      </p>
     </div>
   )
 }
 
-// ── Main page ──────────────────────────────────────────────────────────────
 export default function NewInvitationPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
+  const [themeMode, setThemeMode] = useState<'light'|'dark'>('light')
   const [step, setStep] = useState(1)
-  const [saving, setSaving] = useState(false)
-  const [activeCat, setActiveCat] = useState('all')
+  const [dir, setDir] = useState(1)
+  const [submitting, setSubmitting] = useState(false)
+  const [catFilter, setCatFilter] = useState('all')
 
-  const [form, setForm] = useState({
-    slug:             '',
-    theme_slug:       'min-ivory',
-    palette_slug:     '',
-    bride_name:       '',
-    groom_name:       '',
-    wedding_date:     '',
-    akad_date:        '',
-    akad_time:        '',
-    akad_venue:       '',
-    reception_date:   '',
-    reception_time:   '',
-    reception_venue:  '',
-    venue_lat:        '',
-    venue_lng:        '',
-  })
+  // Step 1
+  const [slug, setSlug] = useState('')
+  const [brideName, setBrideName] = useState('')
+  const [groomName, setGroomName] = useState('')
+  const [weddingDate, setWeddingDate] = useState('')
+  const [contactNumber, setContactNumber] = useState('')
 
-  const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }))
+  // Step 2
+  const [akadDate, setAkadDate] = useState('')
+  const [akadTime, setAkadTime] = useState('')
+  const [akadVenue, setAkadVenue] = useState('')
+  const [receptionDate, setReceptionDate] = useState('')
+  const [receptionTime, setReceptionTime] = useState('')
+  const [receptionVenue, setReceptionVenue] = useState('')
+  const [venueLat, setVenueLat] = useState('')
+  const [venueLng, setVenueLng] = useState('')
+
+  // Step 3
+  const [showTimeline, setShowTimeline] = useState(false)
+  const [timeline, setTimeline] = useState<TimelineItem[]>([{ time: '', title: '' }])
+
+  // Step 4
+  const [themeSlug, setThemeSlug] = useState('gold')
+  const [paletteSlug, setPaletteSlug] = useState('')
+
+  useEffect(() => {
+    setThemeMode(getTheme() as 'light'|'dark')
+    const handler = () => setThemeMode(getTheme() as 'light'|'dark')
+    window.addEventListener('pelaminan-theme-change', handler)
+    return () => window.removeEventListener('pelaminan-theme-change', handler)
+  }, [])
+
+  const tk = TK[themeMode]
+  const allTemplates = getAllTemplates()
+  const filtered = catFilter === 'all' ? allTemplates : allTemplates.filter((t: any) => t.category === catFilter)
+
+  const goNext = () => { setDir(1); setStep(s => s + 1) }
+  const goBack = () => { setDir(-1); setStep(s => s - 1) }
+  const goTo = (n: number) => { if (n < step) { setDir(-1); setStep(n) } }
+
+  const addTimelineItem = () => {
+    if (timeline.length >= 10) return
+    setTimeline(t => [...t, { time: '', title: '' }])
+  }
+  const removeTimelineItem = (i: number) => setTimeline(t => t.filter((_, idx) => idx !== i))
+  const updateTimelineItem = (i: number, field: 'time'|'title', val: string) =>
+    setTimeline(t => t.map((item, idx) => idx === i ? { ...item, [field]: val } : item))
 
   const handleSubmit = async () => {
-    if (!form.slug || !form.bride_name || !form.groom_name || !form.wedding_date) {
-      return toast.error('Please fill in all required fields')
+    if (!slug || !brideName || !groomName || !weddingDate) {
+      toast.error('Lengkapi data pasangan terlebih dahulu')
+      return
     }
-    setSaving(true)
+    setSubmitting(true)
     try {
-      const res = await axios.post(`/api/invitations`, {
-        ...form,
-        venue_lat: form.venue_lat ? parseFloat(form.venue_lat) : null,
-        venue_lng: form.venue_lng ? parseFloat(form.venue_lng) : null,
-      })
-      toast.success('Invitation created!')
-      router.push(`/dashboard/invitations/${res.data.id}/edit`)
+      const token = localStorage.getItem('token')
+      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/invitations`, {
+        slug,
+        bride_full_name: brideName,
+        groom_full_name: groomName,
+        wedding_date: weddingDate,
+        contact_number: contactNumber,
+        akad_date: akadDate || null,
+        akad_time: akadTime || null,
+        akad_venue: akadVenue || null,
+        reception_date: receptionDate || null,
+        reception_time: receptionTime || null,
+        reception_venue: receptionVenue || null,
+        venue_lat: venueLat ? parseFloat(venueLat) : null,
+        venue_lng: venueLng ? parseFloat(venueLng) : null,
+        timeline: showTimeline ? timeline.filter(t => t.title) : null,
+        theme_slug: themeSlug,
+        palette_slug: paletteSlug || null,
+      }, { headers: { Authorization: `Bearer ${token}` } })
+      toast.success('Undangan berhasil dibuat!')
+      router.push('/dashboard/invitations')
     } catch (err: any) {
-      toast.error(err?.response?.data?.error || 'Failed to create invitation')
+      toast.error(err.response?.data?.message || 'Gagal membuat undangan')
     } finally {
-      setSaving(false)
+      setSubmitting(false)
     }
   }
 
   if (loading || !user) return null
 
-  // Derive filtered template list for Step 3
-  const filteredTemplates = activeCat === 'all'
-    ? getAllTemplates().filter(t => t.category)
-    : getTemplatesByCategory(activeCat)
 
-  const selectedTheme    = themes[form.theme_slug]
-  const selectedPalettes = templatePalettes[form.theme_slug] ?? []
-
-  // Step 3 uses a side-by-side layout with phone preview
-  const isStep3 = step === 3
+  const variants = {
+    enter: (d: number) => ({ x: d * 40, opacity: 0 }),
+    center: { x: 0, opacity: 1, transition: { duration: 0.28 } },
+    exit: (d: number) => ({ x: -d * 40, opacity: 0, transition: { duration: 0.2 } }),
+  }
 
   return (
-    <div className="flex min-h-screen bg-stone-50">
+    <div className={`min-h-screen ${tk.page} transition-colors duration-300`}>
       <Toaster position="top-right" />
       <DashboardSidebar />
-
-      <main className={`flex-1 p-10 ${isStep3 ? 'max-w-6xl' : 'max-w-3xl'}`}>
-        {/* Breadcrumb */}
-        <p className="font-cinzel text-xs tracking-widest text-stone-400 mb-6">
-          DASHBOARD / NEW INVITATION
-        </p>
-        <h1 className="font-playfair text-3xl mb-8">Create New Invitation</h1>
-
-        {/* Step indicators */}
-        <div className="flex gap-2 mb-10">
-          {['Couple Details', 'Events & Venue', 'Theme'].map((label, i) => (
-            <button
-              key={i}
-              onClick={() => i < step - 1 && setStep(i + 1)}
-              className={`flex-1 py-3 font-cinzel text-xs tracking-widest border transition-colors ${
-                step === i + 1
-                  ? 'bg-stone-800 text-white border-stone-800'
-                  : i < step - 1
-                  ? 'bg-stone-100 text-stone-600 border-stone-300 cursor-pointer hover:bg-stone-200'
-                  : 'bg-white text-stone-400 border-stone-200 cursor-default'
-              }`}
-            >
-              {i + 1}. {label}
-            </button>
-          ))}
-        </div>
-
-        {/* ── STEP 1: Couple Details ── */}
-        {step === 1 && (
-          <div className="space-y-6">
-            <div>
-              <label className="font-cinzel text-xs tracking-widest text-stone-500 block mb-2">URL SLUG *</label>
-              <input
-                type="text"
-                placeholder="e.g. budi-and-sari"
-                value={form.slug}
-                onChange={e => set('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                className="w-full border border-stone-300 px-4 py-3 font-lato text-sm focus:outline-none focus:border-stone-500"
-              />
-              <p className="font-lato text-xs text-stone-400 mt-1">Your invitation will be at: yourdomain.com/{form.slug || 'your-slug'}</p>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="font-cinzel text-xs tracking-widest text-stone-500 block mb-2">BRIDE NAME *</label>
-                <input type="text" placeholder="Bride's name" value={form.bride_name}
-                  onChange={e => set('bride_name', e.target.value)}
-                  className="w-full border border-stone-300 px-4 py-3 font-lato text-sm focus:outline-none focus:border-stone-500" />
-              </div>
-              <div>
-                <label className="font-cinzel text-xs tracking-widest text-stone-500 block mb-2">GROOM NAME *</label>
-                <input type="text" placeholder="Groom's name" value={form.groom_name}
-                  onChange={e => set('groom_name', e.target.value)}
-                  className="w-full border border-stone-300 px-4 py-3 font-lato text-sm focus:outline-none focus:border-stone-500" />
-              </div>
-            </div>
-            <div>
-              <label className="font-cinzel text-xs tracking-widest text-stone-500 block mb-2">WEDDING DATE *</label>
-              <input type="date" value={form.wedding_date}
-                onChange={e => set('wedding_date', e.target.value)}
-                className="w-full border border-stone-300 px-4 py-3 font-lato text-sm focus:outline-none focus:border-stone-500" />
-            </div>
-            <button onClick={() => {
-              if (!form.slug || !form.bride_name || !form.groom_name || !form.wedding_date)
-                return toast.error('Please fill in all required fields')
-              setStep(2)
-            }}
-              className="w-full bg-stone-800 hover:bg-stone-900 text-white font-cinzel text-xs tracking-widest py-4 transition-colors">
-              NEXT: EVENTS & VENUE →
-            </button>
+      <div className="lg:pl-64 min-h-screen">
+        <div className="max-w-3xl mx-auto px-4 py-8">
+          <div className="mb-8">
+            <h1 className={`font-playfair text-2xl font-bold ${tk.heading}`}>Buat Undangan Baru</h1>
+            <p className={`font-lato text-sm mt-1 ${tk.muted}`}>Isi detail pernikahan selangkah demi selangkah</p>
           </div>
-        )}
-
-        {/* ── STEP 2: Events & Venue ── */}
-        {step === 2 && (
-          <div className="space-y-6">
-            <div className="border-l-2 border-stone-800 pl-4">
-              <p className="font-cinzel text-xs tracking-widest text-stone-500 mb-3">AKAD CEREMONY</p>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="font-cinzel text-xs tracking-widest text-stone-400 block mb-2">DATE</label>
-                  <input type="date" value={form.akad_date} onChange={e => set('akad_date', e.target.value)}
-                    className="w-full border border-stone-300 px-4 py-3 font-lato text-sm focus:outline-none focus:border-stone-500" />
-                </div>
-                <div>
-                  <label className="font-cinzel text-xs tracking-widest text-stone-400 block mb-2">TIME</label>
-                  <input type="time" value={form.akad_time} onChange={e => set('akad_time', e.target.value)}
-                    className="w-full border border-stone-300 px-4 py-3 font-lato text-sm focus:outline-none focus:border-stone-500" />
-                </div>
-              </div>
-              <div className="mt-3">
-                <label className="font-cinzel text-xs tracking-widest text-stone-400 block mb-2">VENUE</label>
-                <input type="text" placeholder="Akad venue name" value={form.akad_venue} onChange={e => set('akad_venue', e.target.value)}
-                  className="w-full border border-stone-300 px-4 py-3 font-lato text-sm focus:outline-none focus:border-stone-500" />
-              </div>
-            </div>
-            <div className="border-l-2 border-stone-400 pl-4">
-              <p className="font-cinzel text-xs tracking-widest text-stone-500 mb-3">RECEPTION</p>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="font-cinzel text-xs tracking-widest text-stone-400 block mb-2">DATE</label>
-                  <input type="date" value={form.reception_date} onChange={e => set('reception_date', e.target.value)}
-                    className="w-full border border-stone-300 px-4 py-3 font-lato text-sm focus:outline-none focus:border-stone-500" />
-                </div>
-                <div>
-                  <label className="font-cinzel text-xs tracking-widest text-stone-400 block mb-2">TIME</label>
-                  <input type="time" value={form.reception_time} onChange={e => set('reception_time', e.target.value)}
-                    className="w-full border border-stone-300 px-4 py-3 font-lato text-sm focus:outline-none focus:border-stone-500" />
-                </div>
-              </div>
-              <div className="mt-3">
-                <label className="font-cinzel text-xs tracking-widest text-stone-400 block mb-2">VENUE</label>
-                <input type="text" placeholder="Reception venue name" value={form.reception_venue} onChange={e => set('reception_venue', e.target.value)}
-                  className="w-full border border-stone-300 px-4 py-3 font-lato text-sm focus:outline-none focus:border-stone-500" />
-              </div>
-            </div>
-            <div>
-              <p className="font-cinzel text-xs tracking-widest text-stone-500 mb-3">GPS COORDINATES (optional)</p>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="font-cinzel text-xs tracking-widest text-stone-400 block mb-2">LATITUDE</label>
-                  <input type="number" step="any" placeholder="-6.2088" value={form.venue_lat} onChange={e => set('venue_lat', e.target.value)}
-                    className="w-full border border-stone-300 px-4 py-3 font-lato text-sm focus:outline-none focus:border-stone-500" />
-                </div>
-                <div>
-                  <label className="font-cinzel text-xs tracking-widest text-stone-400 block mb-2">LONGITUDE</label>
-                  <input type="number" step="any" placeholder="106.8456" value={form.venue_lng} onChange={e => set('venue_lng', e.target.value)}
-                    className="w-full border border-stone-300 px-4 py-3 font-lato text-sm focus:outline-none focus:border-stone-500" />
-                </div>
-              </div>
-            </div>
-            <div className="flex gap-4">
-              <button onClick={() => setStep(1)}
-                className="flex-1 border border-stone-300 text-stone-600 font-cinzel text-xs tracking-widest py-4 hover:bg-stone-100 transition-colors">
-                ← BACK
-              </button>
-              <button onClick={() => setStep(3)}
-                className="flex-1 bg-stone-800 hover:bg-stone-900 text-white font-cinzel text-xs tracking-widest py-4 transition-colors">
-                NEXT: CHOOSE THEME →
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ── STEP 3: Theme + Live Preview ── */}
-        {step === 3 && (
-          <div className="flex gap-10 items-start">
-
-            {/* Left: theme selector */}
-            <div className="flex-1 space-y-6 min-w-0">
-
-              {/* Category filter tabs */}
-              <div className="flex flex-wrap gap-2">
-                {CATEGORIES.map(cat => (
-                  <button
-                    key={cat.slug}
-                    onClick={() => setActiveCat(cat.slug)}
-                    className={`px-3 py-1.5 font-cinzel text-xs tracking-widest transition-colors ${
-                      activeCat === cat.slug
-                        ? 'bg-stone-800 text-white'
-                        : 'border border-stone-300 text-stone-600 hover:bg-stone-100'
-                    }`}
-                  >
-                    {cat.emoji} {cat.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Template grid */}
-              <div className="grid grid-cols-3 gap-3">
-                {filteredTemplates.map(t => (
-                  <button
-                    key={t.slug}
-                    onClick={() => {
-                      const palettes = templatePalettes[t.slug] ?? []
-                      setForm(f => ({
-                        ...f,
-                        theme_slug:   t.slug,
-                        palette_slug: palettes[0]?.slug ?? '',
-                      }))
-                    }}
-                    className={`bg-white p-3 text-left transition-all ${
-                      form.theme_slug === t.slug
-                        ? 'ring-2 ring-stone-800'
-                        : 'border border-stone-200 hover:border-stone-400'
-                    }`}
-                  >
-                    {/* Color swatch */}
-                    <div
-                      className="w-8 h-8 rounded-full mb-2 flex-shrink-0"
-                      style={{ backgroundColor: t.primaryHex }}
-                    />
-                    {/* Template name */}
-                    <p className="font-cinzel text-xs tracking-wider text-stone-700 leading-tight mb-1">
-                      {t.name}
-                    </p>
-                    {/* Category badge */}
-                    {t.category && (
-                      <span className="text-xs font-lato uppercase tracking-wider text-stone-400">
-                        {CAT_DISPLAY[t.category] ?? t.category}
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </div>
-
-              {/* Palette picker */}
-              {selectedPalettes.length > 0 && (
-                <div>
-                  <p className="font-cinzel text-xs tracking-widest text-stone-500 mb-3">COLOUR PALETTE</p>
-                  <div className="flex flex-wrap gap-3">
-                    {selectedPalettes.map(p => (
-                      <button
-                        key={p.slug}
-                        onClick={() => set('palette_slug', p.slug)}
-                        className={`flex items-center gap-2 px-3 py-2 bg-white transition-all ${
-                          form.palette_slug === p.slug
-                            ? 'ring-2 ring-stone-700'
-                            : 'border border-stone-200 hover:border-stone-400'
-                        }`}
-                      >
-                        <span
-                          className="w-4 h-4 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: p.primaryHex }}
-                        />
-                        <span className="font-lato text-xs text-stone-600">{p.name}</span>
-                      </button>
-                    ))}
+          <div className="flex items-center mb-8">
+            {STEPS.map((label, i) => {
+              const n = i + 1
+              const isDone = step > n
+              const isActive = step === n
+              return (
+                <div key={n} className="flex items-center flex-1 last:flex-none">
+                  <div className="flex flex-col items-center gap-1">
+                    <button onClick={() => isDone ? goTo(n) : undefined}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${isActive ? tk.stepActive : isDone ? tk.stepDone : tk.stepPending}`}>
+                      {isDone ? <IconCheck size={14} /> : n}
+                    </button>
+                    <span className={`font-cinzel text-[8px] tracking-wide whitespace-nowrap ${isActive ? tk.sub : tk.muted}`}>{label}</span>
                   </div>
+                  {i < STEPS.length - 1 && (
+                    <div className={`flex-1 h-[2px] mx-2 mb-4 transition-all ${step > n ? tk.stepLineDone : tk.stepLine}`} />
+                  )}
                 </div>
-              )}
-
-              {/* Selected info bar */}
-              <div className="border border-stone-200 bg-stone-50 p-4 font-lato text-sm text-stone-600">
-                Selected: <strong className="font-cinzel">{selectedTheme?.name ?? form.theme_slug}</strong> theme
-                {form.palette_slug && (
-                  <span className="ml-2 text-stone-400">
-                    · {selectedPalettes.find(p => p.slug === form.palette_slug)?.name}
-                  </span>
-                )}
-              </div>
-
-              {/* Navigation buttons */}
-              <div className="flex gap-4">
-                <button onClick={() => setStep(2)}
-                  className="flex-1 border border-stone-300 text-stone-600 font-cinzel text-xs tracking-widest py-4 hover:bg-stone-100 transition-colors">
-                  ← BACK
-                </button>
-                <button
-                  onClick={handleSubmit}
-                  disabled={saving}
-                  className="flex-1 bg-stone-800 hover:bg-stone-900 disabled:opacity-60 text-white font-cinzel text-xs tracking-widest py-4 transition-colors"
-                >
-                  {saving ? 'CREATING...' : '✓ CREATE INVITATION'}
-                </button>
-              </div>
-            </div>
-
-            {/* Right: live phone preview — sticky */}
-            <div className="sticky top-10 pt-2">
-              <PhonePreview
-                brideName={form.bride_name}
-                groomName={form.groom_name}
-                weddingDate={form.wedding_date}
-                themeSlug={form.theme_slug}
-                paletteSlug={form.palette_slug}
-              />
-            </div>
-
+              )
+            })}
           </div>
-        )}
-      </main>
+          <div className="relative overflow-hidden">
+            <AnimatePresence mode="wait" custom={dir}>
+              {step === 1 && (
+                <motion.div key="s1" custom={dir} variants={variants} initial="enter" animate="center" exit="exit">
+                  <div className={`rounded-2xl p-6 ${tk.card}`}>
+                    <h2 className={`font-playfair text-lg font-semibold mb-5 ${tk.heading}`}>Data Pasangan</h2>
+                    <div className="space-y-4">
+                      <div>
+                        <label className={`block mb-1 ${tk.label}`}>Slug URL *</label>
+                        <input value={slug} onChange={e => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g,''))}
+                          placeholder="contoh: budi-dan-sari" className={`w-full px-3 py-2 rounded-lg text-sm transition-colors ${tk.input}`} />
+                        <p className={`text-[11px] mt-1 ${tk.muted}`}>URL: <strong>{slug || 'slug-anda'}</strong></p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className={`block mb-1 ${tk.label}`}>Nama Mempelai Wanita *</label>
+                          <input value={brideName} onChange={e => setBrideName(e.target.value)}
+                            placeholder="Nama lengkap" className={`w-full px-3 py-2 rounded-lg text-sm transition-colors ${tk.input}`} />
+                        </div>
+                        <div>
+                          <label className={`block mb-1 ${tk.label}`}>Nama Mempelai Pria *</label>
+                          <input value={groomName} onChange={e => setGroomName(e.target.value)}
+                            placeholder="Nama lengkap" className={`w-full px-3 py-2 rounded-lg text-sm transition-colors ${tk.input}`} />
+                        </div>
+                      </div>
+                      <div>
+                        <label className={`block mb-1 ${tk.label}`}>Tanggal Pernikahan *</label>
+                        <input type="date" value={weddingDate} onChange={e => setWeddingDate(e.target.value)}
+                          className={`w-full px-3 py-2 rounded-lg text-sm transition-colors ${tk.input}`} />
+                      </div>
+                      <div>
+                        <label className={`block mb-1 ${tk.label}`}>Nomor Kontak</label>
+                        <input value={contactNumber} onChange={e => setContactNumber(e.target.value)}
+                          placeholder="+62812xxxx" className={`w-full px-3 py-2 rounded-lg text-sm transition-colors ${tk.input}`} />
+                        <p className={`text-[11px] mt-1 ${tk.muted}`}>Ditampilkan di undangan untuk konfirmasi tamu</p>
+                      </div>
+                    </div>
+                    <div className="flex justify-end mt-6">
+                      <button onClick={goNext} disabled={!slug||!brideName||!groomName||!weddingDate}
+                        className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-40 ${tk.btnPrimary}`}>
+                        Selanjutnya <IconArrowRight size={16}/>
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+              {step === 2 && (
+                <motion.div key="s2" custom={dir} variants={variants} initial="enter" animate="center" exit="exit">
+                  <div className={`rounded-2xl p-6 ${tk.card}`}>
+                    <h2 className={`font-playfair text-lg font-semibold mb-5 ${tk.heading}`}>Acara & Lokasi</h2>
+                    <div className="space-y-4">
+                      <p className={`font-cinzel text-[10px] tracking-widest uppercase ${tk.sub}`}>Akad Nikah</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className={`block mb-1 ${tk.label}`}>Tanggal Akad</label>
+                          <input type="date" value={akadDate} onChange={e => setAkadDate(e.target.value)} className={`w-full px-3 py-2 rounded-lg text-sm ${tk.input}`}/>
+                        </div>
+                        <div>
+                          <label className={`block mb-1 ${tk.label}`}>Waktu Akad</label>
+                          <input type="time" value={akadTime} onChange={e => setAkadTime(e.target.value)} className={`w-full px-3 py-2 rounded-lg text-sm ${tk.input}`}/>
+                        </div>
+                      </div>
+                      <div>
+                        <label className={`block mb-1 ${tk.label}`}>Lokasi Akad</label>
+                        <input value={akadVenue} onChange={e => setAkadVenue(e.target.value)} placeholder="Nama gedung / masjid" className={`w-full px-3 py-2 rounded-lg text-sm ${tk.input}`}/>
+                      </div>
+                      <hr className={`border-t ${tk.divider}`}/>
+                      <p className={`font-cinzel text-[10px] tracking-widest uppercase ${tk.sub}`}>Resepsi</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className={`block mb-1 ${tk.label}`}>Tanggal Resepsi</label>
+                          <input type="date" value={receptionDate} onChange={e => setReceptionDate(e.target.value)} className={`w-full px-3 py-2 rounded-lg text-sm ${tk.input}`}/>
+                        </div>
+                        <div>
+                          <label className={`block mb-1 ${tk.label}`}>Waktu Resepsi</label>
+                          <input type="time" value={receptionTime} onChange={e => setReceptionTime(e.target.value)} className={`w-full px-3 py-2 rounded-lg text-sm ${tk.input}`}/>
+                        </div>
+                      </div>
+                      <div>
+                        <label className={`block mb-1 ${tk.label}`}>Lokasi Resepsi</label>
+                        <input value={receptionVenue} onChange={e => setReceptionVenue(e.target.value)} placeholder="Nama gedung / ballroom" className={`w-full px-3 py-2 rounded-lg text-sm ${tk.input}`}/>
+                      </div>
+                      <hr className={`border-t ${tk.divider}`}/>
+                      <p className={`font-cinzel text-[10px] tracking-widest uppercase ${tk.sub}`}>Koordinat Maps (opsional)</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className={`block mb-1 ${tk.label}`}>Latitude</label>
+                          <input value={venueLat} onChange={e => setVenueLat(e.target.value)} placeholder="-6.200000" className={`w-full px-3 py-2 rounded-lg text-sm ${tk.input}`}/>
+                        </div>
+                        <div>
+                          <label className={`block mb-1 ${tk.label}`}>Longitude</label>
+                          <input value={venueLng} onChange={e => setVenueLng(e.target.value)} placeholder="106.816666" className={`w-full px-3 py-2 rounded-lg text-sm ${tk.input}`}/>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex justify-between mt-6">
+                      <button onClick={goBack} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all ${tk.btnOutline}`}><IconArrowLeft size={16}/>Kembali</button>
+                      <button onClick={goNext} className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all ${tk.btnPrimary}`}>Selanjutnya<IconArrowRight size={16}/></button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+              {step === 3 && (
+                <motion.div key="s3" custom={dir} variants={variants} initial="enter" animate="center" exit="exit">
+                  <div className={`rounded-2xl p-6 ${tk.card}`}>
+                    <h2 className={`font-playfair text-lg font-semibold mb-5 ${tk.heading}`}>Konten Tambahan</h2>
+                    <div className={`rounded-xl border p-4 mb-4 ${tk.card}`}>
+                      <div className="flex items-center justify-between mb-1">
+                        <div>
+                          <p className={`font-playfair text-sm font-semibold ${tk.heading}`}>Timeline / Rundown</p>
+                          <p className={`text-[11px] ${tk.muted}`}>Tampilkan susunan acara di undangan</p>
+                        </div>
+                        <button onClick={() => setShowTimeline(v => !v)}
+                          className={`relative w-11 h-6 rounded-full transition-colors ${showTimeline ? tk.toggleOn : tk.toggleOff}`}>
+                          <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${showTimeline ? 'left-5' : 'left-0.5'}`}/>
+                        </button>
+                      </div>
+                      <AnimatePresence>
+                        {showTimeline && (
+                          <motion.div initial={{height:0,opacity:0}} animate={{height:'auto',opacity:1}} exit={{height:0,opacity:0}} className="overflow-hidden">
+                            <div className="mt-3 space-y-2">
+                              {timeline.map((item, i) => (
+                                <div key={i} className="flex gap-2 items-center">
+                                  <input value={item.time} onChange={e => updateTimelineItem(i,'time',e.target.value)}
+                                    placeholder="08.00" className={`w-20 px-2 py-1.5 rounded-lg text-xs ${tk.input}`}/>
+                                  <input value={item.title} onChange={e => updateTimelineItem(i,'title',e.target.value)}
+                                    placeholder="Akad Nikah" className={`flex-1 px-2 py-1.5 rounded-lg text-xs ${tk.input}`}/>
+                                  <button onClick={() => removeTimelineItem(i)} className={`p-1.5 rounded-lg transition-colors ${tk.btnDanger}`}>
+                                    <IconTrash size={14}/>
+                                  </button>
+                                </div>
+                              ))}
+                              {timeline.length < 10 && (
+                                <button onClick={addTimelineItem} className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg transition-colors ${tk.btnGhost}`}>
+                                  <IconPlus size={13}/>Tambah Item
+                                </button>
+                              )}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                    <div className={`rounded-xl p-4 text-xs ${tk.infoBox}`}>
+                      Transfer bank dapat ditambahkan setelah undangan dibuat, di halaman <strong>Edit Undangan</strong>.
+                    </div>
+                    <div className="flex justify-between mt-6">
+                      <button onClick={goBack} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all ${tk.btnOutline}`}><IconArrowLeft size={16}/>Kembali</button>
+                      <button onClick={goNext} className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all ${tk.btnPrimary}`}>Selanjutnya<IconArrowRight size={16}/></button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+              {step === 4 && (
+                <motion.div key="s4" custom={dir} variants={variants} initial="enter" animate="center" exit="exit">
+                  <div className="flex gap-6">
+                    <div className={`flex-1 rounded-2xl p-6 ${tk.card}`}>
+                      <h2 className={`font-playfair text-lg font-semibold mb-4 ${tk.heading}`}>Pilih Tema</h2>
+                      <div className="flex gap-2 flex-wrap mb-4">
+                        {CATEGORIES.map(c => (
+                          <button key={c.slug} onClick={() => setCatFilter(c.slug)}
+                            className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${catFilter===c.slug ? tk.catActive : tk.catDefault}`}>
+                            {c.label}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 max-h-72 overflow-y-auto pr-1">
+                        {filtered.map((t: any) => {
+                          const pal = (templatePalettes[t.slug]||[])[0]
+                          const bg = pal?.bgPage || t.bgPage || '#FAF7F2'
+                          const primary = pal?.primaryHex || t.primaryHex || '#6B3F2A'
+                          return (
+                            <button key={t.slug} onClick={() => { setThemeSlug(t.slug); setPaletteSlug('') }}
+                              className={`rounded-xl overflow-hidden transition-all ${themeSlug===t.slug ? tk.tplSelected : tk.tplDefault}`}>
+                              <div className="h-16 flex flex-col items-center justify-center gap-1" style={{background:bg}}>
+                                <span className="text-base opacity-60" style={{color:primary}}>{t.ornamentChar||'*'}</span>
+                                <div className="flex gap-0.5">
+                                  {(templatePalettes[t.slug]||[]).slice(0,4).map((p:any,pi:number) => (
+                                    <div key={pi} className="w-2 h-2 rounded-full" style={{background:p.primaryHex}}/>
+                                  ))}
+                                </div>
+                              </div>
+                              <p className={`text-[9px] font-cinzel tracking-wide px-1 py-1 text-center truncate ${tk.muted}`}>{t.name}</p>
+                            </button>
+                          )
+                        })}
+                      </div>
+                      {(templatePalettes[themeSlug]||[]).length > 0 && (
+                        <div className="mt-4">
+                          <label className={`block mb-2 ${tk.label}`}>Pilih Palet Warna</label>
+                          <div className="flex gap-2 flex-wrap">
+                            {templatePalettes[themeSlug].map((p: any) => (
+                              <button key={p.slug} onClick={() => setPaletteSlug(p.slug)} title={p.name}
+                                className={`w-7 h-7 rounded-full border-2 transition-all ${paletteSlug===p.slug ? 'border-[#6B3F2A] scale-110' : 'border-transparent hover:scale-105'}`}
+                                style={{background:p.primaryHex}}/>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex justify-between mt-6">
+                        <button onClick={goBack} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all ${tk.btnOutline}`}><IconArrowLeft size={16}/>Kembali</button>
+                        <button onClick={handleSubmit} disabled={submitting}
+                          className={`flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-50 ${tk.btnPrimary}`}>
+                          {submitting ? 'Menyimpan...' : 'Buat Undangan'}<IconCheck size={16}/>
+                        </button>
+                      </div>
+                    </div>
+                    <div className="hidden lg:block flex-shrink-0 pt-4">
+                      <PhonePreview brideName={brideName} groomName={groomName} weddingDate={weddingDate} themeSlug={themeSlug} paletteSlug={paletteSlug}/>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
