@@ -103,6 +103,13 @@ export default function LoginPage() {
         </div>
 
         <div className="w-full max-w-md">
+          {/* Back to home */}
+          <div className="mb-6">
+            <Link href="/" className="inline-flex items-center gap-2 font-cinzel text-xs tracking-widest uppercase transition-opacity hover:opacity-100" style={{ color: '#6B3F2A', opacity: 0.6 }}>
+              ← Beranda
+            </Link>
+          </div>
+
           {/* Heading */}
           <div className="mb-8">
             <h2 className="font-playfair text-3xl font-semibold" style={{ color: '#2C1A0E' }}>
