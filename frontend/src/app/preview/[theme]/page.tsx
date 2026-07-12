@@ -1,13 +1,12 @@
 'use client'
 
-import { use } from 'react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { themes } from '@/themes/config'
 import PelaminanOrnament from '@/components/studio/PelaminanOrnament'
 
 interface Props {
-  params: Promise<{ theme: string }>
+  params: { theme: string }
 }
 
 // Mock data for the preview
@@ -32,7 +31,7 @@ const MOCK = {
 }
 
 export default function PreviewPage({ params }: Props) {
-  const { theme: themeSlug } = use(params)
+  const { theme: themeSlug } = params
   const t = themes[themeSlug]
   if (!t) notFound()
 
