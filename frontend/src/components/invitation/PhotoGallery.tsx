@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import type { Swiper as SwiperType } from 'swiper'
 import { Thumbs, Zoom, Navigation as SwiperNavigation } from 'swiper/modules'
@@ -10,6 +10,7 @@ import ZoomPlugin from 'yet-another-react-lightbox/plugins/zoom'
 import { useInView } from 'react-intersection-observer'
 import Image from 'next/image'
 import type { ThemeConfig } from '@/themes/config'
+import { useAnalytics } from '@/hooks/useAnalytics'
 
 import 'swiper/css'
 import 'swiper/css/thumbs'
@@ -38,6 +39,10 @@ export default function PhotoGallery({ photos = PLACEHOLDER_PHOTOS, theme }: Pho
   const [viewMode, setViewMode] = useState<'slider' | 'grid'>('slider')
   const mainSwiperRef = useRef<SwiperType | null>(null)
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 })
+  const { trackViewed, track } = useAnalytics('photo_gallery')
+
+  // Track section viewed
+  useEffect(() => { trackViewed(inView) }, [inView, trackViewed])
 
   const lightboxSlides: Slide[] = photos.map((src) => ({ src }))
 
@@ -48,10 +53,11 @@ export default function PhotoGallery({ photos = PLACEHOLDER_PHOTOS, theme }: Pho
   const handleGridImageClick = useCallback((index: number) => {
     setViewMode('slider')
     setActiveIndex(index)
+    track('gallery_grid_image_clicked', { index })
     setTimeout(() => {
       mainSwiperRef.current?.slideTo(index)
     }, 50)
-  }, [])
+  }, [track])
 
   if (!photos || photos.length === 0) return null
 

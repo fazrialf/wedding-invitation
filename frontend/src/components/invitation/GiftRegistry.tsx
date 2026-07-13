@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useInView } from 'react-intersection-observer'
 import toast from 'react-hot-toast'
+import { useAnalytics } from '@/hooks/useAnalytics'
 import type { ThemeConfig } from '@/themes/config'
 
 /* ─── Types ────────────────────────────────────────────── */
@@ -93,6 +94,7 @@ function CopyButton({
 }) {
   const [copied, setCopied] = useState(false)
 
+  // Wire copy tracking via the onCopy prop — GiftRegistry passes handleCopy down
   const handleCopy = useCallback(async () => {
     await onCopy(text, label)
     setCopied(true)
@@ -144,11 +146,16 @@ export default function GiftRegistry({ theme, gifts, digitalWallets }: GiftRegis
 
   const [openIdx, setOpenIdx] = useState<number | null>(0)
 
+  const { trackViewed, track } = useAnalytics('gift_registry')
+
   // Intersection observer for staggered animations
   const { ref: sectionRef, inView: sectionVisible } = useInView({
     threshold: 0.1,
     triggerOnce: true,
   })
+
+  // Track section viewed when it enters viewport
+  useEffect(() => { trackViewed(sectionVisible) }, [sectionVisible, trackViewed])
 
   const { ref: banksRef, inView: banksVisible } = useInView({
     threshold: 0.1,
@@ -165,6 +172,7 @@ export default function GiftRegistry({ theme, gifts, digitalWallets }: GiftRegis
   const copyToClipboard = async (text: string, label: string) => {
     try {
       await navigator.clipboard.writeText(text)
+      track('gift_account_copied', { label })
       toast.success(`${label} number copied`, {
         style: {
           background: theme.bgDark,

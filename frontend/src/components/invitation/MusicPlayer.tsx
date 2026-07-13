@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import type { ThemeConfig } from '@/themes/config'
+import { useAnalytics } from '@/hooks/useAnalytics'
 
 interface MusicPlayerProps {
   musicUrl: string
@@ -12,6 +13,7 @@ export default function MusicPlayer({ musicUrl, theme }: MusicPlayerProps) {
   const [playing, setPlaying] = useState(false)
   const [asked,   setAsked]   = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const { track } = useAnalytics('music_player')
 
   useEffect(() => {
     if (!musicUrl) return
@@ -26,8 +28,12 @@ export default function MusicPlayer({ musicUrl, theme }: MusicPlayerProps) {
     if (playing) {
       audioRef.current.pause()
       setPlaying(false)
+      track('music_paused')
     } else {
-      audioRef.current.play().then(() => setPlaying(true)).catch(() => {})
+      audioRef.current.play().then(() => {
+        setPlaying(true)
+        track('music_played')
+      }).catch(() => {})
     }
     setAsked(true)
   }

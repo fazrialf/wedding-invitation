@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useInView } from 'react-intersection-observer'
 import axios from 'axios'
+import { useAnalytics } from '@/hooks/useAnalytics'
 import toast, { Toaster } from 'react-hot-toast'
 import type { ThemeConfig } from '@/themes/config'
 
@@ -114,21 +115,29 @@ export default function RsvpForm({ invitationId, guestName, theme }: RsvpFormPro
     threshold: 0.15,
   })
 
+  const { trackViewed, track } = useAnalytics('rsvp')
+
+  // Track section viewed
+  useEffect(() => { trackViewed(inView) }, [inView, trackViewed])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    track('rsvp_form_submitted', { attendance: form.attendance })
     try {
       await axios.post('/api/rsvp', {
         invitation_id: invitationId,
         ...form,
       })
       setSubmitted(true)
+      track('rsvp_submit_success', { attendance: form.attendance })
       /* Small delay so DOM mounts before triggering animation */
       requestAnimationFrame(() => {
         setTimeout(() => setShowSuccess(true), 50)
       })
     } catch {
       toast.error('Failed to submit RSVP. Please try again.')
+      track('rsvp_submit_error')
     } finally {
       setLoading(false)
     }
