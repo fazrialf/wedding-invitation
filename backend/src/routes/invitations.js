@@ -24,7 +24,10 @@ router.get('/by-id/:id', auth, async (req, res) => {
 router.get('/:slug', async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT * FROM invitations WHERE slug = $1 AND is_published = true',
+      `SELECT i.*, u.plan AS user_plan
+       FROM invitations i
+       JOIN users u ON u.id = i.user_id
+       WHERE i.slug = $1 AND i.is_published = true`,
       [req.params.slug]
     )
     if (!result.rows.length) return res.status(404).json({ error: 'Invitation not found' })

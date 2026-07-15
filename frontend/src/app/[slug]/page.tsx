@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import axios from 'axios'
 import { getTheme } from '@/themes/config'
 import EnvelopeOpenerWrapper from './EnvelopeOpenerWrapper'
+import PelaminanWatermark from '@/components/invitation/PelaminanWatermark'
 
 interface Props {
   params:      { slug: string }
@@ -55,10 +56,14 @@ export default async function InvitationPage({ params, searchParams }: Props) {
   const guestName = searchParams.to ? decodeURIComponent(searchParams.to) : undefined
 
   return (
-    <EnvelopeOpenerWrapper
-      invitation={inv}
-      theme={theme}
-      guestName={guestName}
-    />
+    <>
+      <EnvelopeOpenerWrapper
+        invitation={inv}
+        theme={theme}
+        guestName={guestName}
+        userPlan={inv.user_plan}
+      />
+      {inv.user_plan === 'free' && <PelaminanWatermark />}
+    </>
   )
 }

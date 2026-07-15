@@ -29,9 +29,10 @@ interface Props {
   invitation: any
   theme:      ThemeConfig
   guestName?: string
+  userPlan?:  string
 }
 
-export default function EnvelopeOpenerWrapper({ invitation, theme, guestName }: Props) {
+export default function EnvelopeOpenerWrapper({ invitation, theme, guestName, userPlan }: Props) {
   const [opened, setOpened] = useState(false)
 
   if (!opened) {
