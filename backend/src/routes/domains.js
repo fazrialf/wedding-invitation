@@ -55,7 +55,7 @@ router.post('/', auth, [
     )
 
     // Generate DNS instructions
-    const serverIp = process.env.SERVER_IP || '47.128.231.30'
+    const serverIp = process.env.SERVER_IP || ''
     res.json({
       domain: result.rows[0],
       dns_instructions: {
@@ -86,7 +86,7 @@ router.post('/verify/:id', auth, async (req, res) => {
     if (result.rows[0].user_id !== req.user.userId) return res.status(403).json({ error: 'Forbidden' })
 
     const { domain } = result.rows[0]
-    const serverIp   = process.env.SERVER_IP || '47.128.231.30'
+    const serverIp   = process.env.SERVER_IP || ''
 
     let verified = false
     try {

@@ -2,6 +2,7 @@ const router = require('express').Router()
 const { v4: uuidv4 } = require('uuid')
 const pool = require('../config/db')
 const auth = require('../middleware/auth')
+const { checkPlanActive, checkInvitationLimit } = require('../middleware/planLimits')
 const { body, validationResult } = require('express-validator')
 
 // GET /api/invitations/by-id/:id — fetch own invitation by UUID (auth required)
@@ -49,7 +50,7 @@ router.get('/', auth, async (req, res) => {
 })
 
 // POST /api/invitations — create new invitation
-router.post('/', auth, [
+router.post('/', auth, checkPlanActive, checkInvitationLimit, [
   body('bride_name').trim().notEmpty(),
   body('groom_name').trim().notEmpty(),
   body('wedding_date').notEmpty(),

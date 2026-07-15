@@ -39,8 +39,8 @@ router.get('/all/:invitationId', auth, async (req, res) => {
 // POST /api/wishes — submit a wish
 router.post('/', [
   body('invitation_id').notEmpty(),
-  body('guest_name').trim().notEmpty(),
-  body('message').trim().notEmpty().isLength({ max: 500 }),
+  body('guest_name').trim().notEmpty().escape(),
+  body('message').trim().notEmpty().isLength({ max: 500 }).escape(),
 ], async (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() })

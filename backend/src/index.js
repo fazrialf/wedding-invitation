@@ -11,7 +11,23 @@ const PORT = process.env.PORT || 4000
 
 // Middleware
 app.use(helmet())
-app.use(cors({ origin: '*' }))
+
+// CORS — whitelist allowed origins via ALLOWED_ORIGINS env var
+// e.g. ALLOWED_ORIGINS=https://pelaminan.id,https://www.pelaminan.id
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000')
+  .split(',')
+  .map(o => o.trim())
+  .filter(Boolean)
+
+app.use(cors({
+  origin: (origin, cb) => {
+    // Allow requests with no origin (curl, mobile apps, same-server SSR)
+    if (!origin) return cb(null, true)
+    if (allowedOrigins.includes(origin)) return cb(null, true)
+    cb(new Error(`CORS: origin ${origin} not allowed`))
+  },
+  credentials: true,
+}))
 app.use(express.json())
 app.use(morgan('dev'))
 app.use('/uploads', require('express').static(process.env.UPLOAD_DIR || '/app/uploads'))

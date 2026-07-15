@@ -1,14 +1,17 @@
 const router = require('express').Router()
 const { v4: uuidv4 } = require('uuid')
 const pool = require('../config/db')
+const auth = require('../middleware/auth')
+const { checkRsvpLimit } = require('../middleware/planLimits')
 const { body, validationResult } = require('express-validator')
 
 // POST /api/rsvp — submit RSVP
-router.post('/', [
+router.post('/', checkRsvpLimit, [
   body('invitation_id').notEmpty(),
-  body('guest_name').trim().notEmpty(),
+  body('guest_name').trim().notEmpty().escape(),
   body('attendance').isIn(['hadir', 'tidak']),
   body('guest_count').optional().isInt({ min: 1, max: 20 }),
+  body('message').optional().trim().isLength({ max: 500 }).escape(),
 ], async (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() })
@@ -42,9 +45,16 @@ router.post('/', [
   }
 })
 
-// GET /api/rsvp/:invitationId — get RSVPs (auth via query token)
-router.get('/:invitationId', async (req, res) => {
+// GET /api/rsvp/:invitationId — get RSVPs (owner auth required)
+router.get('/:invitationId', auth, async (req, res) => {
   try {
+    // Verify the invitation belongs to the requesting user
+    const own = await pool.query(
+      'SELECT id FROM invitations WHERE id=$1 AND user_id=$2',
+      [req.params.invitationId, req.user.userId]
+    )
+    if (!own.rows.length) return res.status(403).json({ error: 'Forbidden' })
+
     const result = await pool.query(
       'SELECT * FROM rsvp_responses WHERE invitation_id = $1 ORDER BY created_at DESC',
       [req.params.invitationId]
