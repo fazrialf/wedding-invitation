@@ -33,3 +33,6 @@ uploads/
 
 # Docker volumes
 postgres_data/
+
+# pg_dump backups & logs
+backups/

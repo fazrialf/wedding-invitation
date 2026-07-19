@@ -60,6 +60,13 @@ export default function EnvelopeOpenerWrapper({ invitation, theme, guestName, us
         : invitation.love_story)
     : undefined
 
+  // Rundown timeline events
+  const timeline = invitation.timeline
+    ? (typeof invitation.timeline === 'string'
+        ? JSON.parse(invitation.timeline)
+        : invitation.timeline)
+    : undefined
+
   // Gift registry data
   // Remap gift_accounts {bank, number, name} → GiftRegistry format {bankName, accountNumber, accountName}
   const gifts = invitation.gift_accounts
@@ -208,7 +215,7 @@ export default function EnvelopeOpenerWrapper({ invitation, theme, guestName, us
 
       {/* ── Rundown Timeline ───────────────────────────────── */}
       <AnimateOnScroll animation="fade-up" duration={1000} delay={100}>
-        <RundownTimeline theme={theme} />
+        <RundownTimeline theme={theme} timeline={timeline} />
       </AnimateOnScroll>
 
       <SectionDivider variant="floral" theme={theme} />

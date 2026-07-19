@@ -3,11 +3,17 @@
 import { useInView } from 'react-intersection-observer'
 import type { ThemeConfig } from '@/themes/config'
 
-interface RundownTimelineProps {
-  theme: ThemeConfig
+interface TimelineEvent {
+  time: string
+  label: string
 }
 
-const events = [
+interface RundownTimelineProps {
+  theme: ThemeConfig
+  timeline?: TimelineEvent[]
+}
+
+const DEFAULT_EVENTS: TimelineEvent[] = [
   { time: '11:30 AM', label: 'Ketibaan Tetamu' },
   { time: '12:00 PM', label: 'Perarakan Masuk Pengantin' },
   { time: '12:30 PM', label: 'Jamuan Makan' },
@@ -16,7 +22,8 @@ const events = [
   { time: '4:00 PM', label: 'Majlis Selesai' },
 ]
 
-export default function RundownTimeline({ theme }: RundownTimelineProps) {
+export default function RundownTimeline({ theme, timeline }: RundownTimelineProps) {
+  const events = (timeline && timeline.length > 0) ? timeline : DEFAULT_EVENTS
   const { ref, inView } = useInView({
     triggerOnce: true,
     threshold: 0.15,
